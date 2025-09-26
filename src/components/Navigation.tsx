@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Tablet, 
   Users, 
@@ -9,20 +11,29 @@ import {
   BarChart3, 
   Settings,
   Menu,
-  X
+  X,
+  LogOut,
+  Wrench
 } from "lucide-react";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { profile, signOut } = useAuth();
 
   const navigationItems = [
     { href: "/", label: "Dashboard", icon: BarChart3 },
     { href: "/tablets", label: "Tablets", icon: Tablet },
     { href: "/workers", label: "Field Workers", icon: Users },
     { href: "/projects", label: "Projects", icon: FolderOpen },
-    { href: "/settings", label: "Settings", icon: Settings },
+    ...(profile?.role === 'super_admin' ? [
+      { href: "/repair-requests", label: "Repair Requests", icon: Wrench },
+    ] : []),
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -64,19 +75,36 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+          {/* User info and actions */}
+          <div className="flex items-center space-x-4">
+            {profile && (
+              <div className="hidden md:flex items-center space-x-2">
+                <span className="text-sm font-medium">{profile.full_name}</span>
+                <Badge variant={profile.role === 'super_admin' ? 'default' : 'secondary'}>
+                  {profile.role === 'super_admin' ? 'Super Admin' : 'Data Manager'}
+                </Badge>
+              </div>
+            )}
+            
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hidden md:flex">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
             </Button>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -103,6 +131,23 @@ const Navigation = () => {
                   </Link>
                 );
               })}
+              
+              {/* Mobile user info and sign out */}
+              <div className="pt-4 border-t border-border">
+                {profile && (
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <div>
+                      <p className="text-sm font-medium">{profile.full_name}</p>
+                      <Badge variant={profile.role === 'super_admin' ? 'default' : 'secondary'} className="text-xs mt-1">
+                        {profile.role === 'super_admin' ? 'Super Admin' : 'Data Manager'}
+                      </Badge>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

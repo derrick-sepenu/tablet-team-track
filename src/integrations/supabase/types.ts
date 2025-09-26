@@ -14,16 +14,311 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_workers: {
+        Row: {
+          assigned_project_id: string | null
+          assigned_tablet_id: string | null
+          assignment_date: string | null
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          staff_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_project_id?: string | null
+          assigned_tablet_id?: string | null
+          assignment_date?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          staff_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_project_id?: string | null
+          assigned_tablet_id?: string | null
+          assignment_date?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          staff_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_workers_assigned_project_id_fkey"
+            columns: ["assigned_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_workers_assigned_tablet_id_fkey"
+            columns: ["assigned_tablet_id"]
+            isOneToOne: false
+            referencedRelation: "tablets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          must_change_password: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          must_change_password?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          must_change_password?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          data_manager_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_manager_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_manager_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_data_manager_id_fkey"
+            columns: ["data_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_requests: {
+        Row: {
+          assigned_technician: string | null
+          completed_at: string | null
+          id: string
+          priority: Database["public"]["Enums"]["priority_level"]
+          problem_description: string
+          requested_at: string
+          requested_by_id: string
+          status: Database["public"]["Enums"]["repair_status"]
+          status_notes: string | null
+          tablet_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_technician?: string | null
+          completed_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["priority_level"]
+          problem_description: string
+          requested_at?: string
+          requested_by_id: string
+          status?: Database["public"]["Enums"]["repair_status"]
+          status_notes?: string | null
+          tablet_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_technician?: string | null
+          completed_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["priority_level"]
+          problem_description?: string
+          requested_at?: string
+          requested_by_id?: string
+          status?: Database["public"]["Enums"]["repair_status"]
+          status_notes?: string | null
+          tablet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_requests_requested_by_id_fkey"
+            columns: ["requested_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_requests_tablet_id_fkey"
+            columns: ["tablet_id"]
+            isOneToOne: false
+            referencedRelation: "tablets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tablets: {
+        Row: {
+          assigned_project_id: string | null
+          created_at: string
+          date_assigned: string | null
+          id: string
+          model: string
+          notes: string | null
+          serial_number: string
+          sim_number: string | null
+          status: Database["public"]["Enums"]["tablet_status"]
+          tablet_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_project_id?: string | null
+          created_at?: string
+          date_assigned?: string | null
+          id?: string
+          model: string
+          notes?: string | null
+          serial_number: string
+          sim_number?: string | null
+          status?: Database["public"]["Enums"]["tablet_status"]
+          tablet_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_project_id?: string | null
+          created_at?: string
+          date_assigned?: string | null
+          id?: string
+          model?: string
+          notes?: string | null
+          serial_number?: string
+          sim_number?: string | null
+          status?: Database["public"]["Enums"]["tablet_status"]
+          tablet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tablets_assigned_project_id_fkey"
+            columns: ["assigned_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_tablet_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_data_manager_of_project: {
+        Args: { project_id: string }
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      priority_level: "low" | "medium" | "high"
+      repair_status: "pending" | "in_progress" | "completed"
+      tablet_status:
+        | "available"
+        | "assigned"
+        | "in_repair"
+        | "lost"
+        | "returned"
+      user_role: "super_admin" | "data_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +445,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      priority_level: ["low", "medium", "high"],
+      repair_status: ["pending", "in_progress", "completed"],
+      tablet_status: ["available", "assigned", "in_repair", "lost", "returned"],
+      user_role: ["super_admin", "data_manager"],
+    },
   },
 } as const
