@@ -1,0 +1,156 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useFieldWorkers, FieldWorker } from '@/hooks/useFieldWorkers';
+import { useProjects } from '@/hooks/useProjects';
+import { useTablets } from '@/hooks/useTablets';
+import { Loader2 } from 'lucide-react';
+
+interface FieldWorkerFormProps {
+  worker?: FieldWorker;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, onCancel }) => {
+  const { createWorker, updateWorker } = useFieldWorkers();
+  const { projects } = useProjects();
+  const { tablets } = useTablets();
+  const [loading, setLoading] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    staff_id: worker?.staff_id || '',
+    full_name: worker?.full_name || '',
+    assigned_project_id: worker?.assigned_project_id || '',
+    assigned_tablet_id: worker?.assigned_tablet_id || '',
+    is_active: worker?.is_active ?? true,
+  });
+
+  // Filter tablets that are available or currently assigned to this worker
+  const availableTablets = tablets.filter(tablet => 
+    tablet.status === 'available' || tablet.id === worker?.assigned_tablet_id
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let result;
+      
+      if (worker) {
+        result = await updateWorker(worker.id, formData);
+      } else {
+        result = await createWorker(formData);
+      }
+
+      if (result.success) {
+        onSuccess?.();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="staff_id">Staff ID</Label>
+          <Input
+            id="staff_id"
+            value={formData.staff_id}
+            onChange={(e) => handleChange('staff_id', e.target.value)}
+            placeholder="EMP-001"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="full_name">Full Name</Label>
+          <Input
+            id="full_name"
+            value={formData.full_name}
+            onChange={(e) => handleChange('full_name', e.target.value)}
+            placeholder="John Smith"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="assigned_project_id">Assigned Project</Label>
+          <Select 
+            value={formData.assigned_project_id} 
+            onValueChange={(value) => handleChange('assigned_project_id', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No project assigned</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="assigned_tablet_id">Assigned Tablet</Label>
+          <Select 
+            value={formData.assigned_tablet_id} 
+            onValueChange={(value) => handleChange('assigned_tablet_id', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select tablet" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No tablet assigned</SelectItem>
+              {availableTablets.map((tablet) => (
+                <SelectItem key={tablet.id} value={tablet.id}>
+                  {tablet.tablet_id} - {tablet.model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="is_active">Status</Label>
+          <Select 
+            value={formData.is_active.toString()} 
+            onValueChange={(value) => handleChange('is_active', value === 'true')}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Active</SelectItem>
+              <SelectItem value="false">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex gap-3 justify-end">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {worker ? 'Update Worker' : 'Add Worker'}
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+export default FieldWorkerForm;

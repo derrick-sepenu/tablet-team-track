@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
+import FieldWorkerModal from "@/components/modals/FieldWorkerModal";
+import { useFieldWorkers, FieldWorker } from "@/hooks/useFieldWorkers";
+import { useAuth } from "@/contexts/AuthContext";
+import { exportToCSV, exportToExcel, formatWorkersForExport } from "@/utils/exportUtils";
 import { 
   Search, 
   Filter, 
@@ -13,92 +17,55 @@ import {
   MapPin,
   Calendar,
   Phone,
-  Mail
+  Mail,
+  Edit,
+  FileText,
+  Download,
+  Loader2
 } from "lucide-react";
 
 const Workers = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [workerModalOpen, setWorkerModalOpen] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<FieldWorker | undefined>();
+  
+  const { workers, loading } = useFieldWorkers();
+  const { profile } = useAuth();
 
-  // Mock worker data
-  const workers = [
-    {
-      id: "W-001",
-      name: "John Smith",
-      email: "john.smith@company.com",
-      phone: "+1 (555) 123-4567",
-      department: "Environmental Services",
-      position: "Field Technician",
-      assignedTablet: "TB-001",
-      currentProject: "Site Survey Project",
-      location: "Downtown Site A",
-      status: "active",
-      joinDate: "2022-03-15",
-      totalProjects: 12,
-      lastActivity: "2 hours ago"
-    },
-    {
-      id: "W-002",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@company.com",
-      phone: "+1 (555) 234-5678",
-      department: "Quality Control",
-      position: "Senior Inspector",
-      assignedTablet: "TB-002",
-      currentProject: "Environmental Survey",
-      location: "Forest Site B",
-      status: "active",
-      joinDate: "2021-11-08",
-      totalProjects: 18,
-      lastActivity: "1 hour ago"
-    },
-    {
-      id: "W-003",
-      name: "Mike Davis",
-      email: "mike.davis@company.com",
-      phone: "+1 (555) 345-6789",
-      department: "Infrastructure",
-      position: "Field Engineer",
-      assignedTablet: "TB-007",
-      currentProject: "Infrastructure Audit",
-      location: "Industrial Zone C",
-      status: "active",
-      totalProjects: 8,
-      joinDate: "2023-01-22",
-      lastActivity: "30 minutes ago"
-    },
-    {
-      id: "W-004",
-      name: "Lisa Chen",
-      email: "lisa.chen@company.com",
-      phone: "+1 (555) 456-7890",
-      department: "Environmental Services",
-      position: "Data Specialist",
-      assignedTablet: null,
-      currentProject: null,
-      location: "Office",
-      status: "office",
-      joinDate: "2022-07-12",
-      totalProjects: 15,
-      lastActivity: "5 minutes ago"
-    }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-status-active text-success-foreground';
-      case 'office': return 'bg-secondary text-secondary-foreground';
-      case 'inactive': return 'bg-status-inactive text-white';
-      default: return 'bg-secondary text-secondary-foreground';
-    }
+  const getStatusColor = (isActive: boolean) => {
+    return isActive 
+      ? 'bg-status-active text-success-foreground' 
+      : 'bg-status-inactive text-white';
   };
 
   const filteredWorkers = workers.filter(worker =>
-    worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    worker.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    worker.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    worker.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    worker.currentProject?.toLowerCase().includes(searchTerm.toLowerCase())
+    worker.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    worker.staff_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    worker.project?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddWorker = () => {
+    setEditingWorker(undefined);
+    setWorkerModalOpen(true);
+  };
+
+  const handleEditWorker = (worker: FieldWorker) => {
+    setEditingWorker(worker);
+    setWorkerModalOpen(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -111,10 +78,20 @@ const Workers = () => {
               <h1 className="text-2xl font-bold text-foreground">Field Workers</h1>
               <p className="text-muted-foreground">Manage your field workforce and assignments</p>
             </div>
-            <Button className="bg-primary hover:bg-primary-hover">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Worker
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => exportToCSV(formatWorkersForExport(filteredWorkers), 'field_workers_report')}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="outline" onClick={() => exportToExcel(formatWorkersForExport(filteredWorkers), 'field_workers_report')}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </Button>
+              <Button onClick={handleAddWorker} className="bg-primary hover:bg-primary-hover">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Worker
+              </Button>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -145,43 +122,27 @@ const Workers = () => {
                         <User className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold">{worker.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{worker.position}</p>
+                        <CardTitle className="text-lg font-semibold">{worker.full_name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{worker.staff_id}</p>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(worker.status)}>
-                      {worker.status}
+                    <Badge className={getStatusColor(worker.is_active)}>
+                      {worker.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  {/* Contact Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{worker.email}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{worker.phone}</span>
-                    </div>
-                  </div>
-
                   {/* Assignment Info */}
-                  {worker.assignedTablet ? (
+                  {worker.tablet ? (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Tablet className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">Assigned: {worker.assignedTablet}</span>
+                        <span className="text-sm font-medium">Assigned: {worker.tablet.tablet_id}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{worker.currentProject}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Location: {worker.location}</span>
+                        <span className="text-sm text-muted-foreground">{worker.project?.name}</span>
                       </div>
                     </div>
                   ) : (
@@ -190,33 +151,16 @@ const Workers = () => {
                     </div>
                   )}
 
-                  {/* Worker Stats */}
-                  <div className="pt-2 border-t border-border space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Department:</span>
-                      <span className="font-medium">{worker.department}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Projects Completed:</span>
-                      <span className="font-medium">{worker.totalProjects}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Join Date:</span>
-                      <span className="font-medium">{new Date(worker.joinDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Last Activity:</span>
-                      <span className="font-medium">{worker.lastActivity}</span>
-                    </div>
-                  </div>
-
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Edit Profile
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      {worker.assignedTablet ? 'Reassign' : 'Assign Tablet'}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleEditWorker(worker)}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
                     </Button>
                   </div>
                 </CardContent>
@@ -237,7 +181,14 @@ const Workers = () => {
           )}
         </div>
       </main>
-    </div>
+        </div>
+
+        {/* Modal */}
+        <FieldWorkerModal 
+          open={workerModalOpen}
+          onOpenChange={setWorkerModalOpen}
+          worker={editingWorker}
+        />
   );
 };
 
