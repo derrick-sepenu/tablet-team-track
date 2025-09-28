@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
+import ProjectModal from "@/components/modals/ProjectModal";
+import { useProjects, Project } from "@/hooks/useProjects";
 import { 
   Search, 
   Filter, 
@@ -17,11 +19,58 @@ import {
   Clock
 } from "lucide-react";
 
+// Display type for projects - flexible union type
+type DisplayProject = (Project | {
+  id: string;
+  name: string;
+  description?: string;
+  data_manager_id?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}) & {
+  // Optional mock properties for display
+  status?: string;
+  priority?: string;
+  progress?: number;
+  startDate?: string;
+  endDate?: string;
+  assignedWorkers?: string[];
+  assignedTablets?: string[];
+  totalTasks?: number;
+  completedTasks?: number;
+  manager?: string;
+  budget?: string;
+  department?: string;
+  location?: string;
+};
+
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  const { projects, loading } = useProjects();
 
-  // Mock project data
-  const projects = [
+  // Transform real projects to display format
+  const realProjectsDisplay: DisplayProject[] = projects.map(project => ({
+    ...project,
+    status: project.is_active ? 'active' : 'inactive',
+    priority: 'medium',
+    progress: 0,
+    startDate: project.created_at,
+    endDate: '',
+    assignedWorkers: project.field_workers?.map(fw => fw.full_name) || [],
+    assignedTablets: project.tablets?.map(t => t.tablet_id) || [],
+    totalTasks: 0,
+    completedTasks: 0,
+    manager: project.data_manager?.full_name || 'Unassigned',
+    budget: 'N/A',
+    department: 'N/A',
+    location: 'N/A'
+  }));
+
+  // Mock project data for demonstration
+  const mockProjectsDisplay: DisplayProject[] = [
     {
       id: "PRJ-001",
       name: "Site Survey Project",
@@ -38,7 +87,11 @@ const Projects = () => {
       totalTasks: 45,
       completedTasks: 29,
       budget: "$125,000",
-      department: "Environmental Services"
+      department: "Environmental Services",
+      data_manager_id: null,
+      is_active: true,
+      created_at: "2024-01-15T00:00:00.000Z",
+      updated_at: "2024-01-15T00:00:00.000Z"
     },
     {
       id: "PRJ-002", 
@@ -56,7 +109,11 @@ const Projects = () => {
       totalTasks: 32,
       completedTasks: 13,
       budget: "$89,000",
-      department: "Environmental Services"
+      department: "Environmental Services",
+      data_manager_id: null,
+      is_active: true,
+      created_at: "2024-02-01T00:00:00.000Z",
+      updated_at: "2024-02-01T00:00:00.000Z"
     },
     {
       id: "PRJ-003",
@@ -74,7 +131,11 @@ const Projects = () => {
       totalTasks: 78,
       completedTasks: 19,
       budget: "$200,000",
-      department: "Infrastructure"
+      department: "Infrastructure",
+      data_manager_id: null,
+      is_active: true,
+      created_at: "2024-03-01T00:00:00.000Z",
+      updated_at: "2024-03-01T00:00:00.000Z"
     },
     {
       id: "PRJ-004",
@@ -92,7 +153,11 @@ const Projects = () => {
       totalTasks: 55,
       completedTasks: 3,
       budget: "$95,000",
-      department: "Quality Control"
+      department: "Quality Control",
+      data_manager_id: null,
+      is_active: true,
+      created_at: "2024-05-01T00:00:00.000Z",
+      updated_at: "2024-05-01T00:00:00.000Z"
     },
     {
       id: "PRJ-005",
@@ -110,7 +175,11 @@ const Projects = () => {
       totalTasks: 28,
       completedTasks: 28,
       budget: "$45,000",
-      department: "Safety & Compliance"
+      department: "Safety & Compliance",
+      data_manager_id: null,
+      is_active: true,
+      created_at: "2023-10-01T00:00:00.000Z",
+      updated_at: "2024-01-31T00:00:00.000Z"
     }
   ];
 
@@ -133,12 +202,13 @@ const Projects = () => {
     }
   };
 
-  const filteredProjects = projects.filter(project =>
+  // Use real projects if available, otherwise show mock data for demo
+  const displayProjects: DisplayProject[] = realProjectsDisplay.length > 0 ? realProjectsDisplay : mockProjectsDisplay;
+  
+  const filteredProjects = displayProjects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.manager.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.location.toLowerCase().includes(searchTerm.toLowerCase())
+    (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (project.manager && project.manager.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -152,7 +222,10 @@ const Projects = () => {
               <h1 className="text-2xl font-bold text-foreground">Project Management</h1>
               <p className="text-muted-foreground">Manage projects and resource assignments</p>
             </div>
-            <Button className="bg-primary hover:bg-primary-hover">
+            <Button 
+              className="bg-primary hover:bg-primary-hover"
+              onClick={() => setShowCreateModal(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create New Project
             </Button>
@@ -189,11 +262,11 @@ const Projects = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Badge className={getStatusColor(project.status)}>
-                        {project.status}
+                      <Badge className={getStatusColor(project.status || 'active')}>
+                        {project.status || 'active'}
                       </Badge>
-                      <Badge variant="outline" className={getPriorityColor(project.priority)}>
-                        {project.priority}
+                      <Badge variant="outline" className={getPriorityColor(project.priority || 'medium')}>
+                        {project.priority || 'medium'}
                       </Badge>
                     </div>
                   </div>
@@ -205,10 +278,10 @@ const Projects = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{project.completedTasks}/{project.totalTasks} tasks</span>
+                      <span className="font-medium">{project.completedTasks || 0}/{project.totalTasks || 0} tasks</span>
                     </div>
-                    <Progress value={project.progress} className="h-2" />
-                    <div className="text-right text-xs text-muted-foreground">{project.progress}%</div>
+                    <Progress value={project.progress || 0} className="h-2" />
+                    <div className="text-right text-xs text-muted-foreground">{project.progress || 0}%</div>
                   </div>
 
                   {/* Project Details */}
@@ -218,14 +291,14 @@ const Projects = () => {
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-xs text-muted-foreground">Start Date</p>
-                          <p className="font-medium">{new Date(project.startDate).toLocaleDateString()}</p>
+                          <p className="font-medium">{project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-xs text-muted-foreground">End Date</p>
-                          <p className="font-medium">{new Date(project.endDate).toLocaleDateString()}</p>
+                          <p className="font-medium">{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}</p>
                         </div>
                       </div>
                     </div>
@@ -235,21 +308,21 @@ const Projects = () => {
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-xs text-muted-foreground">Workers</p>
-                          <p className="font-medium">{project.assignedWorkers.length || 'None'}</p>
+                          <p className="font-medium">{project.assignedWorkers?.length || 'None'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Tablet className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-xs text-muted-foreground">Tablets</p>
-                          <p className="font-medium">{project.assignedTablets.length || 'None'}</p>
+                          <p className="font-medium">{project.assignedTablets?.length || 'None'}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Assignments */}
-                  {project.assignedWorkers.length > 0 && (
+                  {(project.assignedWorkers && project.assignedWorkers.length > 0) && (
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Assigned Team:</p>
                       <div className="flex flex-wrap gap-2">
@@ -266,19 +339,19 @@ const Projects = () => {
                   <div className="pt-2 border-t border-border space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Manager:</span>
-                      <span className="font-medium">{project.manager}</span>
+                      <span className="font-medium">{project.manager || 'Unassigned'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Department:</span>
-                      <span className="font-medium">{project.department}</span>
+                      <span className="font-medium">{project.department || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Budget:</span>
-                      <span className="font-medium">{project.budget}</span>
+                      <span className="font-medium">{project.budget || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Location:</span>
-                      <span className="font-medium">{project.location}</span>
+                      <span className="font-medium">{project.location || 'N/A'}</span>
                     </div>
                   </div>
 
@@ -309,6 +382,11 @@ const Projects = () => {
           )}
         </div>
       </main>
+      
+      <ProjectModal 
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+      />
     </div>
   );
 };
