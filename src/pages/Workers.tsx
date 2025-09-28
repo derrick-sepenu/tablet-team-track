@@ -181,14 +181,14 @@ const Workers = () => {
           )}
         </div>
       </main>
-        </div>
 
-        {/* Modal */}
-        <FieldWorkerModal 
-          open={workerModalOpen}
-          onOpenChange={setWorkerModalOpen}
-          worker={editingWorker}
-        />
+      {/* Modal */}
+      <FieldWorkerModal 
+        open={workerModalOpen}
+        onOpenChange={setWorkerModalOpen}
+        worker={editingWorker}
+      />
+    </div>
   );
 };
 
