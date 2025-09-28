@@ -8,6 +8,7 @@ import FieldWorkerModal from "@/components/modals/FieldWorkerModal";
 import { useFieldWorkers, FieldWorker } from "@/hooks/useFieldWorkers";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel, formatWorkersForExport } from "@/utils/exportUtils";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Search, 
   Filter, 
@@ -21,7 +22,8 @@ import {
   Edit,
   FileText,
   Download,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react";
 
 const Workers = () => {
@@ -29,7 +31,7 @@ const Workers = () => {
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState<FieldWorker | undefined>();
   
-  const { workers, loading } = useFieldWorkers();
+  const { workers, loading, deleteWorker } = useFieldWorkers();
   const { profile } = useAuth();
 
   const getStatusColor = (isActive: boolean) => {
@@ -52,6 +54,10 @@ const Workers = () => {
   const handleEditWorker = (worker: FieldWorker) => {
     setEditingWorker(worker);
     setWorkerModalOpen(true);
+  };
+
+  const handleDeleteWorker = async (workerId: string) => {
+    await deleteWorker(workerId);
   };
 
   if (loading) {
@@ -162,6 +168,29 @@ const Workers = () => {
                       <Edit className="h-3 w-3 mr-1" />
                       Edit
                     </Button>
+                    {profile?.role === 'super_admin' && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Field Worker</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{worker.full_name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteWorker(worker.id)} className="bg-destructive hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </CardContent>
               </Card>

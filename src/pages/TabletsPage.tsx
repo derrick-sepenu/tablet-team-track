@@ -9,6 +9,7 @@ import RepairRequestModal from "@/components/modals/RepairRequestModal";
 import { useTablets, Tablet } from "@/hooks/useTablets";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel, formatTabletsForExport } from "@/utils/exportUtils";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Search, 
   Filter, 
@@ -23,7 +24,8 @@ import {
   Wrench,
   Download,
   FileText,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react";
 
 const TabletsPage = () => {
@@ -33,7 +35,7 @@ const TabletsPage = () => {
   const [editingTablet, setEditingTablet] = useState<Tablet | undefined>();
   const [repairTabletId, setRepairTabletId] = useState<string | undefined>();
   
-  const { tablets, loading } = useTablets();
+  const { tablets, loading, deleteTablet } = useTablets();
   const { profile } = useAuth();
 
   const getStatusColor = (status: string) => {
@@ -78,6 +80,10 @@ const TabletsPage = () => {
   const handleRepairRequest = (tabletId: string) => {
     setRepairTabletId(tabletId);
     setRepairModalOpen(true);
+  };
+
+  const handleDeleteTablet = async (tabletId: string) => {
+    await deleteTablet(tabletId);
   };
 
   const handleExportCSV = () => {
@@ -222,6 +228,29 @@ const TabletsPage = () => {
                       <Wrench className="h-3 w-3 mr-1" />
                       Repair
                     </Button>
+                    {profile?.role === 'super_admin' && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Tablet</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete tablet "{tablet.tablet_id}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteTablet(tablet.id)} className="bg-destructive hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </CardContent>
               </Card>

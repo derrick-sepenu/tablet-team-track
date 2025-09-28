@@ -9,6 +9,7 @@ import TabletsPage from "./pages/TabletsPage";
 import Workers from "./pages/Workers";
 import Projects from "./pages/Projects";
 import RepairRequests from "./pages/RepairRequests";
+import DataManagers from "./pages/DataManagers";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
@@ -69,6 +70,7 @@ const AppRoutes = () => {
       <Route path="/tablets" element={<ProtectedRoute><TabletsPage /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute><Workers /></ProtectedRoute>} />
       <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+      <Route path="/data-managers" element={<ProtectedRoute><DataManagers /></ProtectedRoute>} />
       <Route path="/repair-requests" element={<ProtectedRoute><RepairRequests /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

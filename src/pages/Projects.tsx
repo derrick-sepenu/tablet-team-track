@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Navigation from "@/components/Navigation";
 import ProjectModal from "@/components/modals/ProjectModal";
 import { useProjects, Project } from "@/hooks/useProjects";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Search, 
   Filter, 
@@ -16,7 +18,10 @@ import {
   Calendar,
   MapPin,
   Tablet,
-  Clock
+  Clock,
+  Eye,
+  Settings,
+  Trash2
 } from "lucide-react";
 
 // Display type for projects - flexible union type
@@ -48,8 +53,10 @@ type DisplayProject = (Project | {
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | undefined>();
   
-  const { projects, loading } = useProjects();
+  const { projects, loading, deleteProject } = useProjects();
+  const { profile } = useAuth();
 
   // Transform real projects to display format
   const realProjectsDisplay: DisplayProject[] = projects.map(project => ({
@@ -200,6 +207,20 @@ const Projects = () => {
       case 'low': return 'text-muted-foreground';
       default: return 'text-muted-foreground';
     }
+  };
+
+  const handleViewDetails = (project: DisplayProject) => {
+    // For now, we'll just show an alert with project details
+    alert(`Project Details:\nName: ${project.name}\nStatus: ${project.status}\nManager: ${project.manager}\nProgress: ${project.progress}%`);
+  };
+
+  const handleManageTeam = (project: DisplayProject) => {
+    setEditingProject(project as Project);
+    setShowCreateModal(true);
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    await deleteProject(projectId);
   };
 
   // Use real projects if available, otherwise show mock data for demo
@@ -357,12 +378,37 @@ const Projects = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewDetails(project)}>
+                      <Eye className="h-3 w-3 mr-1" />
                       View Details
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleManageTeam(project)}>
+                      <Settings className="h-3 w-3 mr-1" />
                       Manage Team
                     </Button>
+                    {profile?.role === 'super_admin' && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{project.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteProject(project.id)} className="bg-destructive hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -386,6 +432,7 @@ const Projects = () => {
       <ProjectModal 
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
+        project={editingProject}
       />
     </div>
   );
