@@ -23,8 +23,8 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
   const [formData, setFormData] = useState({
     staff_id: worker?.staff_id || '',
     full_name: worker?.full_name || '',
-    assigned_project_id: worker?.assigned_project_id || '',
-    assigned_tablet_id: worker?.assigned_tablet_id || '',
+    assigned_project_id: worker?.assigned_project_id || 'none',
+    assigned_tablet_id: worker?.assigned_tablet_id || 'none',
     is_active: worker?.is_active ?? true,
   });
 
@@ -40,10 +40,17 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
     try {
       let result;
       
+      // Convert "none" values to null for database
+      const submitData = {
+        ...formData,
+        assigned_project_id: formData.assigned_project_id === "none" ? null : formData.assigned_project_id || null,
+        assigned_tablet_id: formData.assigned_tablet_id === "none" ? null : formData.assigned_tablet_id || null,
+      };
+      
       if (worker) {
-        result = await updateWorker(worker.id, formData);
+        result = await updateWorker(worker.id, submitData);
       } else {
-        result = await createWorker(formData);
+        result = await createWorker(submitData);
       }
 
       if (result.success) {
@@ -93,7 +100,7 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No project assigned</SelectItem>
+              <SelectItem value="none">No project assigned</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}
@@ -113,7 +120,7 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
               <SelectValue placeholder="Select tablet" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No tablet assigned</SelectItem>
+              <SelectItem value="none">No tablet assigned</SelectItem>
               {availableTablets.map((tablet) => (
                 <SelectItem key={tablet.id} value={tablet.id}>
                   {tablet.tablet_id} - {tablet.model}

@@ -26,7 +26,7 @@ const TabletForm: React.FC<TabletFormProps> = ({ tablet, onSuccess, onCancel }) 
     sim_number: tablet?.sim_number || '',
     status: (tablet?.status || 'available') as 'available' | 'assigned' | 'in_repair' | 'lost' | 'returned',
     notes: tablet?.notes || '',
-    assigned_project_id: tablet?.assigned_project_id || '',
+    assigned_project_id: tablet?.assigned_project_id || 'none',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,10 +36,16 @@ const TabletForm: React.FC<TabletFormProps> = ({ tablet, onSuccess, onCancel }) 
     try {
       let result;
       
+      // Convert "none" values to null for database
+      const submitData = {
+        ...formData,
+        assigned_project_id: formData.assigned_project_id === "none" ? null : formData.assigned_project_id || null,
+      };
+      
       if (tablet) {
-        result = await updateTablet(tablet.id, formData);
+        result = await updateTablet(tablet.id, submitData);
       } else {
-        result = await createTablet(formData);
+        result = await createTablet(submitData);
       }
 
       if (result.success) {
@@ -127,7 +133,7 @@ const TabletForm: React.FC<TabletFormProps> = ({ tablet, onSuccess, onCancel }) 
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No project assigned</SelectItem>
+              <SelectItem value="none">No project assigned</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}
