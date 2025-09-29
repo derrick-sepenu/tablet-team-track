@@ -164,33 +164,32 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  // Safely handle React being null
-  if (!React || !React.useState) {
-    console.warn('React context not available, returning empty toast functions');
+  try {
+    const [state, setState] = React.useState<State>(memoryState);
+
+    React.useEffect(() => {
+      listeners.push(setState);
+      return () => {
+        const index = listeners.indexOf(setState);
+        if (index > -1) {
+          listeners.splice(index, 1);
+        }
+      };
+    }, [state]);
+
+    return {
+      ...state,
+      toast,
+      dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    };
+  } catch (error) {
+    console.warn('Toast hook error, returning fallback:', error);
     return {
       toasts: [],
       toast: () => ({ id: '', dismiss: () => {}, update: () => {} }),
       dismiss: () => {},
     };
   }
-
-  const [state, setState] = React.useState<State>(memoryState);
-
-  React.useEffect(() => {
-    listeners.push(setState);
-    return () => {
-      const index = listeners.indexOf(setState);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-    };
-  }, [state]);
-
-  return {
-    ...state,
-    toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
-  };
 }
 
 export { useToast, toast };
