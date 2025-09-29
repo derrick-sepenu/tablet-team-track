@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
@@ -164,6 +164,16 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
+  // Safely handle React being null
+  if (!React || !React.useState) {
+    console.warn('React context not available, returning empty toast functions');
+    return {
+      toasts: [],
+      toast: () => ({ id: '', dismiss: () => {}, update: () => {} }),
+      dismiss: () => {},
+    };
+  }
+
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {
