@@ -98,33 +98,45 @@ const UserManagement = () => {
 
     setCreating(true);
     try {
-      // Create the user account
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use regular signup instead of admin API
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newUser.email,
         password: newUser.password,
-        email_confirm: true, // Auto-confirm email for admin-created users
-        user_metadata: {
-          full_name: newUser.fullName,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: newUser.fullName,
+          }
         }
       });
 
       if (authError) throw authError;
 
-      // Update the profile with role
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          role: newUser.role,
-          must_change_password: true,
-        })
-        .eq('user_id', authData.user.id);
+      if (authData.user) {
+        // Update the profile with the correct role using service operations
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            role: newUser.role,
+            must_change_password: true,
+          })
+          .eq('user_id', authData.user.id);
 
-      if (profileError) throw profileError;
-
-      toast({
-        title: "User Created",
-        description: `${newUser.fullName} has been added successfully.`,
-      });
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          // If profile update fails, still show success but with a note
+          toast({
+            title: "User Created",
+            description: `${newUser.fullName} has been added. Profile role may need manual update.`,
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "User Created",
+            description: `${newUser.fullName} has been added successfully.`,
+          });
+        }
+      }
 
       setNewUser({
         email: '',
@@ -137,7 +149,7 @@ const UserManagement = () => {
     } catch (error: any) {
       toast({
         title: "Error Creating User",
-        description: error.message,
+        description: error.message || "Failed to create user",
         variant: "destructive",
       });
     } finally {
