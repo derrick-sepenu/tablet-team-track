@@ -98,45 +98,29 @@ const UserManagement = () => {
 
     setCreating(true);
     try {
-      // Use regular signup instead of admin API
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: newUser.fullName,
-          }
-        }
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Call the edge function to create user with admin privileges
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: newUser.email,
+          password: newUser.password,
+          fullName: newUser.fullName,
+          role: newUser.role,
+        },
       });
 
-      if (authError) throw authError;
+      if (error) throw error;
 
-      if (authData.user) {
-        // Update the profile with the correct role using service operations
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            role: newUser.role,
-            must_change_password: true,
-          })
-          .eq('user_id', authData.user.id);
-
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          // If profile update fails, still show success but with a note
-          toast({
-            title: "User Created",
-            description: `${newUser.fullName} has been added. Profile role may need manual update.`,
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "User Created",
-            description: `${newUser.fullName} has been added successfully.`,
-          });
-        }
-      }
+      toast({
+        title: "User Created",
+        description: `${newUser.fullName} has been added successfully and can now log in.`,
+      });
 
       setNewUser({
         email: '',
