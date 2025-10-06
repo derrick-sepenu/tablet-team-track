@@ -7,6 +7,7 @@ import Navigation from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import DataManagerModal from "@/components/modals/DataManagerModal";
 import { 
   Search, 
   Filter, 
@@ -15,7 +16,8 @@ import {
   FolderOpen,
   Users,
   Calendar,
-  Loader2
+  Loader2,
+  Edit
 } from "lucide-react";
 
 interface DataManager {
@@ -38,6 +40,8 @@ const DataManagers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dataManagers, setDataManagers] = useState<DataManager[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedManager, setSelectedManager] = useState<DataManager | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const { profile } = useAuth();
 
   useEffect(() => {
@@ -113,6 +117,17 @@ const DataManagers = () => {
       project.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  const handleEditManager = (manager: DataManager) => {
+    setSelectedManager(manager);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedManager(null);
+    fetchDataManagers();
+  };
 
   if (profile?.role !== 'super_admin') {
     return (
@@ -239,12 +254,23 @@ const DataManagers = () => {
                     </div>
                   )}
 
-                  {/* Manager Info */}
-                  <div className="pt-2 border-t border-border space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Joined:</span>
-                      <span className="font-medium">{new Date(manager.created_at).toLocaleDateString()}</span>
+                  {/* Manager Info and Actions */}
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Joined: </span>
+                        <span className="font-medium">{new Date(manager.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
+                    <Button 
+                      onClick={() => handleEditManager(manager)}
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                    >
+                      <Edit className="h-3 w-3 mr-2" />
+                      Manage Assignments
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -264,6 +290,15 @@ const DataManagers = () => {
           )}
         </div>
       </main>
+
+      {selectedManager && (
+        <DataManagerModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          manager={selectedManager}
+          onSuccess={handleModalClose}
+        />
+      )}
     </div>
   );
 };
