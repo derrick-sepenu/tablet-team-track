@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
+import { passwordSchema as strongPasswordSchema, PASSWORD_REQUIREMENTS } from '@/utils/passwordValidation';
 
 const passwordSchema = z.object({
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: strongPasswordSchema,
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -100,6 +101,12 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onClo
               </Button>
             </div>
             {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+            <div className="text-xs text-muted-foreground space-y-1 bg-muted p-2 rounded">
+              <p className="font-medium">Password Requirements:</p>
+              {PASSWORD_REQUIREMENTS.map((req, idx) => (
+                <p key={idx}>• {req}</p>
+              ))}
+            </div>
           </div>
           
           <div className="space-y-2">

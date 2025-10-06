@@ -14,12 +14,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Edit, Trash2, UserPlus, Shield, Users, Search } from 'lucide-react';
 import { z } from 'zod';
 import Navigation from '@/components/Navigation';
+import { passwordSchema } from '@/utils/passwordValidation';
 
 const userSchema = z.object({
   email: z.string().email('Invalid email address'),
   fullName: z.string().min(1, 'Full name is required'),
   role: z.enum(['super_admin', 'data_manager']),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
 });
 
 interface User {

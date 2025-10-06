@@ -12,6 +12,7 @@ import Projects from "./pages/Projects";
 import RepairRequests from "./pages/RepairRequests";
 import DataManagers from "./pages/DataManagers";
 import UserManagement from "./pages/UserManagement";
+import Settings from "./pages/Settings";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
@@ -74,6 +75,7 @@ const AppRoutes = () => {
       <Route path="/data-managers" element={<ProtectedRoute><DataManagers /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
       <Route path="/repair-requests" element={<ProtectedRoute><RepairRequests /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

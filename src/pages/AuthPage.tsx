@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
+import { passwordSchema, PASSWORD_REQUIREMENTS } from '@/utils/passwordValidation';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -16,7 +17,7 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
   fullName: z.string().min(1, 'Full name is required'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -253,6 +254,12 @@ const AuthPage = () => {
                     </Button>
                   </div>
                   {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                  <div className="text-xs text-muted-foreground space-y-1 bg-muted p-2 rounded">
+                    <p className="font-medium">Password Requirements:</p>
+                    {PASSWORD_REQUIREMENTS.map((req, idx) => (
+                      <p key={idx}>• {req}</p>
+                    ))}
+                  </div>
                 </div>
                 
                 <div className="space-y-2">

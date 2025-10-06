@@ -11,6 +11,7 @@ interface Profile {
   role: 'super_admin' | 'data_manager';
   is_active: boolean;
   must_change_password: boolean;
+  last_password_change: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -204,11 +205,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive",
         });
       } else {
-        // Update must_change_password flag
+        // Update must_change_password flag and last_password_change
         if (profile) {
           await supabase
             .from('profiles')
-            .update({ must_change_password: false })
+            .update({ 
+              must_change_password: false,
+              last_password_change: new Date().toISOString()
+            })
             .eq('user_id', user?.id);
           
           await refreshProfile();

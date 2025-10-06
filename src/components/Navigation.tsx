@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/contexts/AuthContext';
+import PasswordExpiryPrompt from './PasswordExpiryPrompt';
 import { 
   Tablet, 
   Users, 
@@ -30,6 +31,7 @@ const Navigation = () => {
       { href: "/data-managers", label: "Data Managers", icon: Settings },
       { href: "/user-management", label: "User Management", icon: Users },
       { href: "/repair-requests", label: "Repair Requests", icon: Wrench },
+      { href: "/settings", label: "Settings", icon: Settings },
     ] : []),
   ];
 
@@ -45,8 +47,10 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-card border-b border-border shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      <PasswordExpiryPrompt />
+      <nav className="bg-card border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
@@ -155,6 +159,7 @@ const Navigation = () => {
         )}
       </div>
     </nav>
+    </>
   );
 };
 
