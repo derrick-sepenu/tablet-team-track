@@ -85,11 +85,8 @@ const Navigation = () => {
           {/* User info and actions */}
           <div className="flex items-center space-x-2">
             {profile && (
-              <div className="hidden md:flex items-center space-x-1.5">
+              <div className="hidden md:flex items-center">
                 <span className="text-xs font-medium truncate max-w-[120px]">{profile.full_name}</span>
-                <Badge variant={profile.role === 'super_admin' ? 'default' : 'secondary'} className="text-xs px-2 py-0.5">
-                  {profile.role === 'super_admin' ? 'Super Admin' : 'Data Manager'}
-                </Badge>
               </div>
             )}
             
@@ -143,12 +140,7 @@ const Navigation = () => {
               <div className="pt-4 border-t border-border">
                 {profile && (
                   <div className="flex items-center justify-between px-3 py-2">
-                    <div>
-                      <p className="text-sm font-medium">{profile.full_name}</p>
-                      <Badge variant={profile.role === 'super_admin' ? 'default' : 'secondary'} className="text-xs mt-1">
-                        {profile.role === 'super_admin' ? 'Super Admin' : 'Data Manager'}
-                      </Badge>
-                    </div>
+                    <p className="text-sm font-medium">{profile.full_name}</p>
                     <Button variant="ghost" size="sm" onClick={handleSignOut}>
                       <LogOut className="h-4 w-4" />
                     </Button>
