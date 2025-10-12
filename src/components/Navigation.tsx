@@ -60,7 +60,7 @@ const Navigation = () => {
             </div>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:ml-8 md:flex md:space-x-1">
+            <div className="hidden md:ml-6 md:flex md:space-x-0.5">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -68,13 +68,13 @@ const Navigation = () => {
                     key={item.href}
                     to={item.href}
                     className={cn(
-                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      "flex items-center px-2 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
                       isActive(item.href)
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )}
                   >
-                    <Icon className="h-4 w-4 mr-2" />
+                    <Icon className="h-3.5 w-3.5 mr-1.5" />
                     {item.label}
                   </Link>
                 );
@@ -83,18 +83,18 @@ const Navigation = () => {
           </div>
 
           {/* User info and actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             {profile && (
-              <div className="hidden md:flex items-center space-x-2">
-                <span className="text-sm font-medium">{profile.full_name}</span>
-                <Badge variant={profile.role === 'super_admin' ? 'default' : 'secondary'}>
+              <div className="hidden md:flex items-center space-x-1.5">
+                <span className="text-xs font-medium truncate max-w-[120px]">{profile.full_name}</span>
+                <Badge variant={profile.role === 'super_admin' ? 'default' : 'secondary'} className="text-xs px-2 py-0.5">
                   {profile.role === 'super_admin' ? 'Super Admin' : 'Data Manager'}
                 </Badge>
               </div>
             )}
             
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hidden md:flex">
-              <LogOut className="h-4 w-4 mr-2" />
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hidden md:flex text-xs px-2">
+              <LogOut className="h-3.5 w-3.5 mr-1.5" />
               Sign Out
             </Button>
 
