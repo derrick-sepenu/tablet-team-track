@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordExpiryPrompt from './PasswordExpiryPrompt';
+import logo from "@/assets/logo.png";
 import { 
   Tablet, 
   Users, 
@@ -54,8 +55,8 @@ const Navigation = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <Tablet className="h-8 w-8 text-primary mr-2" />
-              <span className="text-xl font-semibold text-foreground">TabletManager</span>
+              <img src={logo} alt="Logo" className="h-12 w-12 mr-3" />
+              <span className="text-xl font-semibold text-foreground">Tablet Manager</span>
             </div>
             
             {/* Desktop Navigation */}
