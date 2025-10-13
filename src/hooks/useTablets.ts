@@ -19,6 +19,10 @@ export interface Tablet {
   project?: {
     id: string;
     name: string;
+    data_manager?: {
+      id: string;
+      full_name: string;
+    };
   };
   field_worker?: {
     id: string;
@@ -42,7 +46,11 @@ export const useTablets = () => {
           *,
           projects:assigned_project_id (
             id,
-            name
+            name,
+            data_manager:profiles!projects_data_manager_id_fkey (
+              id,
+              full_name
+            )
           ),
           field_workers:field_workers!field_workers_assigned_tablet_id_fkey (
             id,

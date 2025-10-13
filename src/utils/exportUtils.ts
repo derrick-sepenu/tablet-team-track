@@ -53,6 +53,7 @@ export const formatTabletsForExport = (tablets: Tablet[]) => {
     'SIM Number': tablet.sim_number || '',
     'Status': tablet.status,
     'Assigned Project': tablet.project?.name || '',
+    'Data Manager': tablet.project?.data_manager?.full_name || '',
     'Assigned Worker': tablet.field_worker?.full_name || '',
     'Date Assigned': tablet.date_assigned ? new Date(tablet.date_assigned).toLocaleDateString() : '',
     'Notes': tablet.notes || '',

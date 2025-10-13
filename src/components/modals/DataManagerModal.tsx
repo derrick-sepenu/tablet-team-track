@@ -218,6 +218,7 @@ const DataManagerModal: React.FC<DataManagerModalProps> = ({
       const tabletUpdates = tablets.map(async (tablet) => {
         // Check if this tablet should be assigned to any of the manager's projects
         let newProjectId: string | null = null;
+        let shouldUpdateStatus = false;
         
         for (const [projectId, tabletSet] of projectTablets.entries()) {
           if (selectedProjects.has(projectId) && tabletSet.has(tablet.id)) {
@@ -227,9 +228,21 @@ const DataManagerModal: React.FC<DataManagerModalProps> = ({
         }
 
         if (tablet.assigned_project_id !== newProjectId) {
+          const updateData: any = { assigned_project_id: newProjectId };
+          
+          // If assigning to a project, update status and date
+          if (newProjectId) {
+            updateData.status = 'assigned';
+            updateData.date_assigned = new Date().toISOString();
+          } else {
+            // If unassigning, set to available
+            updateData.status = 'available';
+            updateData.date_assigned = null;
+          }
+          
           return supabase
             .from('tablets')
-            .update({ assigned_project_id: newProjectId })
+            .update(updateData)
             .eq('id', tablet.id);
         }
       });
