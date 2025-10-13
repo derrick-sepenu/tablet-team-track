@@ -29,7 +29,8 @@ const Navigation = () => {
     { href: "/workers", label: "Field Workers", icon: Users },
     { href: "/projects", label: "Projects", icon: FolderOpen },
     ...(profile?.role === 'super_admin' ? [
-      { href: "/data-managers", label: "Data Managers", icon: Settings },
+      { href: "/data-managers", label: "Data Managers", icon: Users },
+      { href: "/user-management", label: "User Management", icon: Settings },
       { href: "/repair-requests", label: "Repair Requests", icon: Wrench },
       { href: "/settings", label: "Settings", icon: Settings },
     ] : []),
