@@ -60,7 +60,7 @@ const Navigation = () => {
             </div>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:ml-6 md:flex md:space-x-0.5">
+            <div className="hidden md:ml-6 md:flex md:space-x-2">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -68,7 +68,7 @@ const Navigation = () => {
                     key={item.href}
                     to={item.href}
                     className={cn(
-                      "flex items-center px-2 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
+                      "flex items-center px-3 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
                       isActive(item.href)
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary"
