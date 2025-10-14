@@ -228,6 +228,37 @@ export const useTablets = () => {
   useEffect(() => {
     if (profile) {
       fetchTablets();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('tablets-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tablets'
+          },
+          () => {
+            fetchTablets();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'field_workers'
+          },
+          () => {
+            fetchTablets();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [profile]);
 

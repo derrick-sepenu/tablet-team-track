@@ -174,6 +174,26 @@ export const useRepairRequests = () => {
   useEffect(() => {
     if (profile) {
       fetchRepairRequests();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('repair-requests-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'repair_requests'
+          },
+          () => {
+            fetchRepairRequests();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [profile]);
 

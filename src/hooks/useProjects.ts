@@ -171,6 +171,26 @@ export const useProjects = () => {
   useEffect(() => {
     if (profile) {
       fetchProjects();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('projects-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'projects'
+          },
+          () => {
+            fetchProjects();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [profile]);
 

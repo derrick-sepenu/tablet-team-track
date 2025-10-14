@@ -174,6 +174,37 @@ export const useFieldWorkers = () => {
   useEffect(() => {
     if (profile) {
       fetchWorkers();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('workers-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'field_workers'
+          },
+          () => {
+            fetchWorkers();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tablets'
+          },
+          () => {
+            fetchWorkers();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [profile]);
 

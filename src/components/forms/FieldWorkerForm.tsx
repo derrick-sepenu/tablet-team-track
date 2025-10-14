@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFieldWorkers, FieldWorker } from '@/hooks/useFieldWorkers';
 import { useProjects } from '@/hooks/useProjects';
 import { useTablets } from '@/hooks/useTablets';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 interface FieldWorkerFormProps {
@@ -35,6 +36,31 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate staff code
+    const staffCode = formData.staff_id.toUpperCase().trim();
+    if (!/^[A-Z]{2}$/.test(staffCode)) {
+      alert('Staff Code must be exactly 2 uppercase letters (e.g., AB, CD)');
+      return;
+    }
+
+    // Check uniqueness within the same project
+    if (formData.assigned_project_id && formData.assigned_project_id !== 'none') {
+      const { data: existingWorkers } = await supabase
+        .from('field_workers')
+        .select('id, staff_id')
+        .eq('assigned_project_id', formData.assigned_project_id)
+        .eq('staff_id', staffCode);
+
+      if (existingWorkers && existingWorkers.length > 0) {
+        // If editing, check if it's a different worker
+        if (!worker || existingWorkers.some(w => w.id !== worker.id)) {
+          alert(`Staff Code "${staffCode}" is already used in this project. Please use a different code.`);
+          return;
+        }
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -43,6 +69,7 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
       // Convert "none" values to null for database
       const submitData = {
         ...formData,
+        staff_id: staffCode,
         assigned_project_id: formData.assigned_project_id === "none" ? null : formData.assigned_project_id || null,
         assigned_tablet_id: formData.assigned_tablet_id === "none" ? null : formData.assigned_tablet_id || null,
       };
@@ -69,14 +96,17 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="staff_id">Staff ID</Label>
+          <Label htmlFor="staff_id">Staff Code</Label>
           <Input
             id="staff_id"
             value={formData.staff_id}
-            onChange={(e) => handleChange('staff_id', e.target.value)}
-            placeholder="EMP-001"
+            onChange={(e) => handleChange('staff_id', e.target.value.toUpperCase())}
+            placeholder="AB"
+            maxLength={2}
             required
+            className="uppercase"
           />
+          <p className="text-xs text-muted-foreground">2 letters (unique per project)</p>
         </div>
 
         <div className="space-y-2">
