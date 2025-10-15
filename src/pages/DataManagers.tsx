@@ -52,11 +52,28 @@ const DataManagers = () => {
     try {
       setLoading(true);
       
+      // First, get user IDs with data_manager role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'data_manager');
+
+      if (roleError) throw roleError;
+
+      const dataManagerUserIds = roleData?.map(r => r.user_id) || [];
+
+      if (dataManagerUserIds.length === 0) {
+        setDataManagers([]);
+        setLoading(false);
+        return;
+      }
+
       // Fetch data managers with their projects
       const { data: managersData, error: managersError } = await supabase
         .from('profiles')
         .select(`
           id,
+          user_id,
           full_name,
           email,
           is_active,
@@ -68,7 +85,7 @@ const DataManagers = () => {
             is_active
           )
         `)
-        .eq('role', 'data_manager');
+        .in('user_id', dataManagerUserIds);
 
       if (managersError) throw managersError;
 

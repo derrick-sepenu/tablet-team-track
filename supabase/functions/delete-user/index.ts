@@ -1,9 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const deleteUserSchema = z.object({
+  userId: z.string().uuid('Invalid user ID format'),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -41,37 +47,47 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is super admin
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
+    // Check if user is super admin using user_roles table
+    const { data: userRole, error: roleError } = await supabaseAdmin
+      .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .single();
 
-    if (profileError || !profile || profile.role !== 'super_admin') {
+    if (roleError || !userRole || userRole.role !== 'super_admin') {
       return new Response(
         JSON.stringify({ error: 'Only super admins can delete users' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { userId } = await req.json();
-
-    if (!userId) {
+    // Get and validate request body
+    const requestBody = await req.json();
+    
+    const validationResult = deleteUserSchema.safeParse(requestBody);
+    if (!validationResult.success) {
       return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
+        JSON.stringify({ 
+          error: 'Validation failed',
+          details: validationResult.error.errors.map(e => ({
+            field: e.path.join('.'),
+            message: e.message
+          }))
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const { userId } = validationResult.data;
+
     // Check if the user being deleted is a super admin (prevent deletion)
-    const { data: targetProfile } = await supabaseAdmin
-      .from('profiles')
+    const { data: targetRole } = await supabaseAdmin
+      .from('user_roles')
       .select('role')
       .eq('user_id', userId)
       .single();
 
-    if (targetProfile?.role === 'super_admin') {
+    if (targetRole?.role === 'super_admin') {
       return new Response(
         JSON.stringify({ error: 'Cannot delete super admin users' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

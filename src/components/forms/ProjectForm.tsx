@@ -42,10 +42,21 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onSuccess, onCancel, project 
 
   const fetchDataManagers = async () => {
     try {
+      // Fetch users with data_manager role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'data_manager');
+
+      if (roleError) throw roleError;
+
+      const dataManagerUserIds = roleData?.map(r => r.user_id) || [];
+
+      // Fetch profiles for data managers
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .eq('role', 'data_manager')
+        .in('user_id', dataManagerUserIds)
         .eq('is_active', true);
 
       if (error) throw error;
