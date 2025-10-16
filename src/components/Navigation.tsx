@@ -83,12 +83,6 @@ const Navigation = () => {
 
           {/* User info and actions */}
           <div className="flex items-center space-x-2 ml-auto">
-            {profile && (
-              <div className="hidden md:flex flex-col items-end">
-                <span className="text-xs font-medium truncate max-w-[120px] leading-tight">{profile.full_name}</span>
-              </div>
-            )}
-            
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="hidden md:flex text-xs px-2">
               <LogOut className="h-3.5 w-3.5 mr-1.5" />
               Sign Out
