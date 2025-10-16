@@ -82,7 +82,7 @@ const Navigation = () => {
           </div>
 
           {/* User info and actions */}
-          <div className="flex items-center space-x-2 ml-8">
+          <div className="flex items-center space-x-2 ml-auto">
             {profile && (
               <div className="hidden md:flex flex-col items-end">
                 <span className="text-xs font-medium truncate max-w-[120px] leading-tight">{profile.full_name}</span>
