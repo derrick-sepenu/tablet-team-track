@@ -32,7 +32,6 @@ const Navigation = () => {
       { href: "/data-managers", label: "Data Managers", icon: Users },
       { href: "/user-management", label: "User Management", icon: Settings },
       { href: "/repair-requests", label: "Repair Requests", icon: Wrench },
-      { href: "/settings", label: "Settings", icon: Settings },
     ] : []),
   ];
 
