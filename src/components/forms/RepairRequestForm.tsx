@@ -100,8 +100,12 @@ const RepairRequestForm: React.FC<RepairRequestFormProps> = ({
             onChange={(e) => handleChange('problem_description', e.target.value)}
             placeholder="Describe the issue with the tablet..."
             rows={4}
+            maxLength={5000}
             required
           />
+          <p className="text-xs text-muted-foreground">
+            {formData.problem_description.length}/5000 characters
+          </p>
         </div>
       </div>
 

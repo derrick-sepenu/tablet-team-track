@@ -116,6 +116,7 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
             value={formData.full_name}
             onChange={(e) => handleChange('full_name', e.target.value)}
             placeholder="John Smith"
+            maxLength={100}
             required
           />
         </div>
