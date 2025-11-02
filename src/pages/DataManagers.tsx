@@ -243,8 +243,8 @@ const DataManagers = () => {
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center justify-center">
-                        <Users className="h-4 w-4 text-accent-foreground mr-1" />
-                        <span className="text-lg font-semibold text-accent-foreground">{manager.field_workers_count}</span>
+                        <Users className="h-4 w-4 text-foreground mr-1" />
+                        <span className="text-lg font-semibold text-foreground">{manager.field_workers_count}</span>
                       </div>
                       <p className="text-xs text-muted-foreground">Workers</p>
                     </div>
