@@ -80,7 +80,13 @@ export const useTablets = () => {
 
       if (error) throw error;
       
-      setTablets(data || []);
+      // Transform field_workers array to field_worker object
+      const transformedData = data?.map(tablet => ({
+        ...tablet,
+        field_worker: tablet.field_workers?.[0] || null
+      })) || [];
+      
+      setTablets(transformedData);
     } catch (error: any) {
       console.error('Error fetching tablets:', error);
       toast({
