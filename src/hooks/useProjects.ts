@@ -186,6 +186,28 @@ export const useProjects = () => {
             fetchProjects();
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tablets'
+          },
+          () => {
+            fetchProjects();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'field_workers'
+          },
+          () => {
+            fetchProjects();
+          }
+        )
         .subscribe();
 
       return () => {
