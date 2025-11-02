@@ -72,7 +72,13 @@ export const useFieldWorkers = () => {
 
       if (error) throw error;
       
-      setWorkers(data || []);
+      // Transform tablets object to tablet object
+      const transformedData = data?.map(worker => ({
+        ...worker,
+        tablet: worker.tablets || null
+      })) || [];
+      
+      setWorkers(transformedData);
     } catch (error: any) {
       console.error('Error fetching workers:', error);
       toast({
