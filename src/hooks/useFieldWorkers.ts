@@ -206,6 +206,17 @@ export const useFieldWorkers = () => {
             fetchWorkers();
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'projects'
+          },
+          () => {
+            fetchWorkers();
+          }
+        )
         .subscribe();
 
       return () => {
