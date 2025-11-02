@@ -64,8 +64,6 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
     setLoading(true);
 
     try {
-      let result;
-      
       // Convert "none" values to null for database
       const submitData = {
         ...formData,
@@ -74,6 +72,39 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
         assigned_tablet_id: formData.assigned_tablet_id === "none" ? null : formData.assigned_tablet_id || null,
       };
       
+      // Handle tablet status updates
+      const oldTabletId = worker?.assigned_tablet_id;
+      const newTabletId = submitData.assigned_tablet_id;
+      
+      // If tablet assignment changed, update tablet statuses
+      if (oldTabletId !== newTabletId) {
+        // Reset old tablet to available
+        if (oldTabletId) {
+          await supabase
+            .from('tablets')
+            .update({ 
+              status: 'available',
+              assigned_project_id: null,
+              date_assigned: null
+            })
+            .eq('id', oldTabletId);
+        }
+        
+        // Update new tablet to assigned
+        if (newTabletId) {
+          await supabase
+            .from('tablets')
+            .update({ 
+              status: 'assigned',
+              assigned_project_id: submitData.assigned_project_id,
+              date_assigned: new Date().toISOString()
+            })
+            .eq('id', newTabletId);
+        }
+      }
+      
+      // Update/create field worker
+      let result;
       if (worker) {
         result = await updateWorker(worker.id, submitData);
       } else {
