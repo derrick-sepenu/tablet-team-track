@@ -189,6 +189,17 @@ export const useRepairRequests = () => {
             fetchRepairRequests();
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tablets'
+          },
+          () => {
+            fetchRepairRequests();
+          }
+        )
         .subscribe();
 
       return () => {

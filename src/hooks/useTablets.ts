@@ -260,6 +260,17 @@ export const useTablets = () => {
             fetchTablets();
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'projects'
+          },
+          () => {
+            fetchTablets();
+          }
+        )
         .subscribe();
 
       return () => {
