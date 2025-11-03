@@ -112,7 +112,8 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
       }
 
       if (result.success) {
-        onSuccess?.();
+        // Small delay to ensure state updates before modal closes
+        setTimeout(() => onSuccess?.(), 100);
       }
     } finally {
       setLoading(false);

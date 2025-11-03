@@ -275,8 +275,11 @@ const DataManagerModal: React.FC<DataManagerModalProps> = ({
         description: "Assignments updated successfully",
       });
       
-      onSuccess?.();
-      onOpenChange(false);
+      // Small delay to ensure state updates before modal closes
+      setTimeout(() => {
+        onSuccess?.();
+        onOpenChange(false);
+      }, 100);
     } catch (error: any) {
       console.error('Error saving assignments:', error);
       toast({
