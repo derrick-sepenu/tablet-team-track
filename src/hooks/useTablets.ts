@@ -108,6 +108,24 @@ export const useTablets = () => {
     notes?: string;
     assigned_project_id?: string;
   }) => {
+    // Create optimistic tablet with temporary ID
+    const optimisticTablet: Tablet = {
+      id: `temp-${Date.now()}`,
+      tablet_id: tabletData.tablet_id,
+      serial_number: tabletData.serial_number,
+      model: tabletData.model,
+      sim_number: tabletData.sim_number,
+      status: tabletData.status || 'available',
+      notes: tabletData.notes,
+      assigned_project_id: tabletData.assigned_project_id,
+      date_assigned: tabletData.status === 'assigned' ? new Date().toISOString() : undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add optimistically to UI
+    setTablets(prev => [optimisticTablet, ...prev]);
+
     try {
       const { error } = await supabase
         .from('tablets')
@@ -115,7 +133,7 @@ export const useTablets = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched before showing success
+      // Wait for the data to be refetched to get real data
       await fetchTablets();
       
       toast({
@@ -125,6 +143,9 @@ export const useTablets = () => {
       
       return { success: true };
     } catch (error: any) {
+      // Remove optimistic tablet on error
+      setTablets(prev => prev.filter(t => t.id !== optimisticTablet.id));
+      
       console.error('Error creating tablet:', error);
       toast({
         title: "Error",
@@ -136,6 +157,16 @@ export const useTablets = () => {
   };
 
   const updateTablet = async (id: string, updates: Partial<Tablet>) => {
+    // Store original tablet for rollback
+    const originalTablet = tablets.find(t => t.id === id);
+    
+    // Apply optimistic update
+    setTablets(prev => prev.map(tablet => 
+      tablet.id === id 
+        ? { ...tablet, ...updates, updated_at: new Date().toISOString() }
+        : tablet
+    ));
+
     try {
       const { error } = await supabase
         .from('tablets')
@@ -144,7 +175,7 @@ export const useTablets = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched before showing success
+      // Wait for the data to be refetched to get confirmed data
       await fetchTablets();
       
       toast({
@@ -154,6 +185,13 @@ export const useTablets = () => {
       
       return { success: true };
     } catch (error: any) {
+      // Rollback optimistic update on error
+      if (originalTablet) {
+        setTablets(prev => prev.map(tablet => 
+          tablet.id === id ? originalTablet : tablet
+        ));
+      }
+      
       console.error('Error updating tablet:', error);
       toast({
         title: "Error",
@@ -165,6 +203,12 @@ export const useTablets = () => {
   };
 
   const deleteTablet = async (id: string) => {
+    // Store original tablet for rollback
+    const originalTablet = tablets.find(t => t.id === id);
+    
+    // Remove optimistically from UI
+    setTablets(prev => prev.filter(t => t.id !== id));
+
     try {
       const { error } = await supabase
         .from('tablets')
@@ -181,6 +225,11 @@ export const useTablets = () => {
       await fetchTablets();
       return { success: true };
     } catch (error: any) {
+      // Restore tablet on error
+      if (originalTablet) {
+        setTablets(prev => [...prev, originalTablet]);
+      }
+      
       console.error('Error deleting tablet:', error);
       toast({
         title: "Error",
@@ -192,6 +241,22 @@ export const useTablets = () => {
   };
 
   const assignTablet = async (tabletId: string, workerId: string, projectId: string) => {
+    // Store original tablet for rollback
+    const originalTablet = tablets.find(t => t.id === tabletId);
+    
+    // Apply optimistic update
+    setTablets(prev => prev.map(tablet => 
+      tablet.id === tabletId 
+        ? {
+            ...tablet,
+            assigned_project_id: projectId,
+            status: 'assigned' as const,
+            date_assigned: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        : tablet
+    ));
+
     try {
       // Update tablet assignment
       const { error: tabletError } = await supabase
@@ -225,6 +290,13 @@ export const useTablets = () => {
       await fetchTablets();
       return { success: true };
     } catch (error: any) {
+      // Rollback optimistic update on error
+      if (originalTablet) {
+        setTablets(prev => prev.map(tablet => 
+          tablet.id === tabletId ? originalTablet : tablet
+        ));
+      }
+      
       console.error('Error assigning tablet:', error);
       toast({
         title: "Error",
