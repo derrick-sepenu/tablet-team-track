@@ -85,8 +85,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onSuccess, onCancel, project 
       }
 
       if (result.success) {
-        // Small delay to ensure state updates before modal closes
-        setTimeout(() => onSuccess?.(), 100);
+        onSuccess?.();
       }
     } catch (error) {
       console.error('Error submitting project form:', error);

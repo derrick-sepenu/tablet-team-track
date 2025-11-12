@@ -40,8 +40,7 @@ const RepairRequestForm: React.FC<RepairRequestFormProps> = ({
     try {
       const result = await createRepairRequest(formData);
       if (result.success) {
-        // Small delay to ensure state updates before modal closes
-        setTimeout(() => onSuccess?.(), 100);
+        onSuccess?.();
       }
     } finally {
       setLoading(false);

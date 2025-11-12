@@ -83,6 +83,21 @@ export const useRepairRequests = () => {
     problem_description: string;
     priority?: 'low' | 'medium' | 'high';
   }) => {
+    // Create optimistic repair request with temporary ID
+    const optimisticRequest: RepairRequest = {
+      id: `temp-${Date.now()}`,
+      tablet_id: requestData.tablet_id,
+      requested_by_id: profile?.id || '',
+      problem_description: requestData.problem_description,
+      priority: requestData.priority || 'medium',
+      status: 'pending',
+      requested_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add optimistically to UI
+    setRepairRequests(prev => [optimisticRequest, ...prev]);
+
     try {
       const { error } = await supabase
         .from('repair_requests')
@@ -95,14 +110,19 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get real data
+      await fetchRepairRequests();
+      
       toast({
         title: "Success",
         description: "Repair request submitted successfully",
       });
       
-      await fetchRepairRequests();
       return { success: true };
     } catch (error: any) {
+      // Remove optimistic request on error
+      setRepairRequests(prev => prev.filter(r => r.id !== optimisticRequest.id));
+      
       console.error('Error creating repair request:', error);
       toast({
         title: "Error",
@@ -114,6 +134,16 @@ export const useRepairRequests = () => {
   };
 
   const updateRepairRequest = async (id: string, updates: Partial<RepairRequest>) => {
+    // Store original request for rollback
+    const originalRequest = repairRequests.find(r => r.id === id);
+    
+    // Apply optimistic update
+    setRepairRequests(prev => prev.map(request => 
+      request.id === id 
+        ? { ...request, ...updates, updated_at: new Date().toISOString() }
+        : request
+    ));
+
     try {
       const { error } = await supabase
         .from('repair_requests')
@@ -122,14 +152,23 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get confirmed data
+      await fetchRepairRequests();
+      
       toast({
         title: "Success",
         description: "Repair request updated successfully",
       });
       
-      await fetchRepairRequests();
       return { success: true };
     } catch (error: any) {
+      // Rollback optimistic update on error
+      if (originalRequest) {
+        setRepairRequests(prev => prev.map(request => 
+          request.id === id ? originalRequest : request
+        ));
+      }
+      
       console.error('Error updating repair request:', error);
       toast({
         title: "Error",
@@ -141,6 +180,22 @@ export const useRepairRequests = () => {
   };
 
   const completeRepairRequest = async (id: string, notes?: string) => {
+    // Store original request for rollback
+    const originalRequest = repairRequests.find(r => r.id === id);
+    
+    // Apply optimistic update
+    setRepairRequests(prev => prev.map(request => 
+      request.id === id 
+        ? { 
+            ...request, 
+            status: 'completed' as const,
+            completed_at: new Date().toISOString(),
+            status_notes: notes,
+            updated_at: new Date().toISOString()
+          }
+        : request
+    ));
+
     try {
       const { error } = await supabase
         .from('repair_requests')
@@ -153,14 +208,23 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get confirmed data
+      await fetchRepairRequests();
+      
       toast({
         title: "Success",
         description: "Repair request marked as completed",
       });
       
-      await fetchRepairRequests();
       return { success: true };
     } catch (error: any) {
+      // Rollback optimistic update on error
+      if (originalRequest) {
+        setRepairRequests(prev => prev.map(request => 
+          request.id === id ? originalRequest : request
+        ));
+      }
+      
       console.error('Error completing repair request:', error);
       toast({
         title: "Error",

@@ -98,6 +98,22 @@ export const useFieldWorkers = () => {
     assigned_project_id?: string;
     is_active?: boolean;
   }) => {
+    // Create optimistic worker with temporary ID
+    const optimisticWorker: FieldWorker = {
+      id: `temp-${Date.now()}`,
+      staff_id: workerData.staff_id,
+      full_name: workerData.full_name,
+      assigned_tablet_id: workerData.assigned_tablet_id,
+      assigned_project_id: workerData.assigned_project_id,
+      is_active: workerData.is_active ?? true,
+      assignment_date: workerData.assigned_tablet_id ? new Date().toISOString() : undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add optimistically to UI
+    setWorkers(prev => [optimisticWorker, ...prev]);
+
     try {
       const { error } = await supabase
         .from('field_workers')
@@ -105,14 +121,19 @@ export const useFieldWorkers = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get real data
+      await fetchWorkers();
+      
       toast({
         title: "Success",
         description: "Field worker added successfully",
       });
       
-      await fetchWorkers();
       return { success: true };
     } catch (error: any) {
+      // Remove optimistic worker on error
+      setWorkers(prev => prev.filter(w => w.id !== optimisticWorker.id));
+      
       console.error('Error creating worker:', error);
       toast({
         title: "Error",
@@ -124,6 +145,16 @@ export const useFieldWorkers = () => {
   };
 
   const updateWorker = async (id: string, updates: Partial<FieldWorker>) => {
+    // Store original worker for rollback
+    const originalWorker = workers.find(w => w.id === id);
+    
+    // Apply optimistic update
+    setWorkers(prev => prev.map(worker => 
+      worker.id === id 
+        ? { ...worker, ...updates, updated_at: new Date().toISOString() }
+        : worker
+    ));
+
     try {
       const { error } = await supabase
         .from('field_workers')
@@ -132,14 +163,23 @@ export const useFieldWorkers = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get confirmed data
+      await fetchWorkers();
+      
       toast({
         title: "Success",
         description: "Field worker updated successfully",
       });
       
-      await fetchWorkers();
       return { success: true };
     } catch (error: any) {
+      // Rollback optimistic update on error
+      if (originalWorker) {
+        setWorkers(prev => prev.map(worker => 
+          worker.id === id ? originalWorker : worker
+        ));
+      }
+      
       console.error('Error updating worker:', error);
       toast({
         title: "Error",
@@ -151,6 +191,12 @@ export const useFieldWorkers = () => {
   };
 
   const deleteWorker = async (id: string) => {
+    // Store original worker for rollback
+    const originalWorker = workers.find(w => w.id === id);
+    
+    // Remove optimistically from UI
+    setWorkers(prev => prev.filter(w => w.id !== id));
+
     try {
       const { error } = await supabase
         .from('field_workers')
@@ -167,6 +213,11 @@ export const useFieldWorkers = () => {
       await fetchWorkers();
       return { success: true };
     } catch (error: any) {
+      // Restore worker on error
+      if (originalWorker) {
+        setWorkers(prev => [...prev, originalWorker]);
+      }
+      
       console.error('Error deleting worker:', error);
       toast({
         title: "Error",

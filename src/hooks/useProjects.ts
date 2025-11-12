@@ -89,6 +89,22 @@ export const useProjects = () => {
     data_manager_id?: string;
     is_active?: boolean;
   }) => {
+    // Create optimistic project with temporary ID
+    const optimisticProject: Project = {
+      id: `temp-${Date.now()}`,
+      name: projectData.name,
+      description: projectData.description,
+      data_manager_id: projectData.data_manager_id,
+      is_active: projectData.is_active ?? true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      tablets: [],
+      field_workers: [],
+    };
+
+    // Add optimistically to UI
+    setProjects(prev => [optimisticProject, ...prev]);
+
     try {
       const { error } = await supabase
         .from('projects')
@@ -96,14 +112,19 @@ export const useProjects = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get real data
+      await fetchProjects();
+      
       toast({
         title: "Success",
         description: "Project created successfully",
       });
       
-      await fetchProjects();
       return { success: true };
     } catch (error: any) {
+      // Remove optimistic project on error
+      setProjects(prev => prev.filter(p => p.id !== optimisticProject.id));
+      
       console.error('Error creating project:', error);
       toast({
         title: "Error",
@@ -115,6 +136,16 @@ export const useProjects = () => {
   };
 
   const updateProject = async (id: string, updates: Partial<Project>) => {
+    // Store original project for rollback
+    const originalProject = projects.find(p => p.id === id);
+    
+    // Apply optimistic update
+    setProjects(prev => prev.map(project => 
+      project.id === id 
+        ? { ...project, ...updates, updated_at: new Date().toISOString() }
+        : project
+    ));
+
     try {
       const { error } = await supabase
         .from('projects')
@@ -123,14 +154,23 @@ export const useProjects = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched to get confirmed data
+      await fetchProjects();
+      
       toast({
         title: "Success",
         description: "Project updated successfully",
       });
       
-      await fetchProjects();
       return { success: true };
     } catch (error: any) {
+      // Rollback optimistic update on error
+      if (originalProject) {
+        setProjects(prev => prev.map(project => 
+          project.id === id ? originalProject : project
+        ));
+      }
+      
       console.error('Error updating project:', error);
       toast({
         title: "Error",
@@ -142,6 +182,12 @@ export const useProjects = () => {
   };
 
   const deleteProject = async (id: string) => {
+    // Store original project for rollback
+    const originalProject = projects.find(p => p.id === id);
+    
+    // Remove optimistically from UI
+    setProjects(prev => prev.filter(p => p.id !== id));
+
     try {
       const { error } = await supabase
         .from('projects')
@@ -158,6 +204,11 @@ export const useProjects = () => {
       await fetchProjects();
       return { success: true };
     } catch (error: any) {
+      // Restore project on error
+      if (originalProject) {
+        setProjects(prev => [...prev, originalProject]);
+      }
+      
       console.error('Error deleting project:', error);
       toast({
         title: "Error",
