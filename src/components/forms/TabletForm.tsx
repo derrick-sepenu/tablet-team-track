@@ -49,8 +49,7 @@ const TabletForm: React.FC<TabletFormProps> = ({ tablet, onSuccess, onCancel }) 
       }
 
       if (result.success) {
-        // Small delay to ensure state updates before modal closes
-        setTimeout(() => onSuccess?.(), 100);
+        onSuccess?.();
       }
     } finally {
       setLoading(false);

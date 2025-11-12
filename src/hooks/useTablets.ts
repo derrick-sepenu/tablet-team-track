@@ -115,12 +115,14 @@ export const useTablets = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched before showing success
+      await fetchTablets();
+      
       toast({
         title: "Success",
         description: "Tablet added successfully",
       });
       
-      await fetchTablets();
       return { success: true };
     } catch (error: any) {
       console.error('Error creating tablet:', error);
@@ -142,12 +144,14 @@ export const useTablets = () => {
 
       if (error) throw error;
 
+      // Wait for the data to be refetched before showing success
+      await fetchTablets();
+      
       toast({
         title: "Success",
         description: "Tablet updated successfully",
       });
       
-      await fetchTablets();
       return { success: true };
     } catch (error: any) {
       console.error('Error updating tablet:', error);
