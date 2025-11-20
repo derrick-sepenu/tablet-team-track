@@ -313,12 +313,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_tablet_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_tablet_id: { Args: never; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       has_role: {
@@ -332,10 +329,7 @@ export type Database = {
         Args: { project_id: string }
         Returns: boolean
       }
-      is_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "data_manager"
