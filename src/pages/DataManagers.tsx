@@ -146,6 +146,7 @@ const DataManagers = () => {
     fetchDataManagers();
   };
 
+  // SECURITY NOTE: This client-side check is for UX only. All data access is protected by RLS policies.
   if (profile?.role !== 'super_admin') {
     return (
       <div className="min-h-screen bg-background">
