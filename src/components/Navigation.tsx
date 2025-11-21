@@ -28,6 +28,7 @@ const Navigation = () => {
     { href: "/tablets", label: "Tablets", icon: Tablet },
     { href: "/workers", label: "Field Workers", icon: Users },
     { href: "/projects", label: "Projects", icon: FolderOpen },
+    // SECURITY NOTE: This client-side check is for UX only. All data access is protected by RLS policies.
     ...(profile?.role === 'super_admin' ? [
       { href: "/data-managers", label: "Data Managers", icon: Users },
       { href: "/user-management", label: "User Management", icon: Settings },

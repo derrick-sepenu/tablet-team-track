@@ -221,6 +221,8 @@ const UserManagement = () => {
     return matchesSearch && matchesRole;
   });
 
+  // SECURITY NOTE: This client-side check is for UX only. All data access is protected by RLS policies.
+  // Users who bypass this check cannot access/modify data due to server-side authorization.
   if (profile?.role !== 'super_admin') {
     return (
       <div className="min-h-screen bg-background">
