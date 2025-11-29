@@ -121,8 +121,7 @@ export const useFieldWorkers = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched to get real data
-      await fetchWorkers();
+      // Real-time subscription will handle the update
       
       toast({
         title: "Success",
@@ -163,8 +162,7 @@ export const useFieldWorkers = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched to get confirmed data
-      await fetchWorkers();
+      // Real-time subscription will handle the update
       
       toast({
         title: "Success",

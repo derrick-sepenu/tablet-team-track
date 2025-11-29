@@ -110,8 +110,7 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched to get real data
-      await fetchRepairRequests();
+      // Real-time subscription will handle the update
       
       toast({
         title: "Success",
@@ -152,8 +151,7 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched to get confirmed data
-      await fetchRepairRequests();
+      // Real-time subscription will handle the update
       
       toast({
         title: "Success",
@@ -208,8 +206,7 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
-      // Wait for the data to be refetched to get confirmed data
-      await fetchRepairRequests();
+      // Real-time subscription will handle the update
       
       toast({
         title: "Success",
