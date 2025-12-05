@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useThresholdAlerts } from "@/hooks/useThresholdAlerts";
 import { 
   Tablet, 
   Users, 
@@ -15,6 +16,9 @@ import { useNavigate } from "react-router-dom";
 const StatsWidget = () => {
   const { stats, loading } = useDashboardStats();
   const navigate = useNavigate();
+  
+  // Monitor thresholds and trigger alerts
+  useThresholdAlerts(stats, loading);
 
   if (loading) {
     return (
