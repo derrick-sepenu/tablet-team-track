@@ -112,7 +112,8 @@ export const useProjects = () => {
 
       if (error) throw error;
 
-      // Real-time subscription will handle the update
+      // Fetch fresh data to replace optimistic project with real data
+      await fetchProjects();
       
       toast({
         title: "Success",

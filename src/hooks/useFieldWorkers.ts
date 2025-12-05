@@ -121,7 +121,8 @@ export const useFieldWorkers = () => {
 
       if (error) throw error;
 
-      // Real-time subscription will handle the update
+      // Fetch fresh data to replace optimistic worker with real data
+      await fetchWorkers();
       
       toast({
         title: "Success",

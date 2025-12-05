@@ -110,7 +110,8 @@ export const useRepairRequests = () => {
 
       if (error) throw error;
 
-      // Real-time subscription will handle the update
+      // Fetch fresh data to replace optimistic request with real data
+      await fetchRepairRequests();
       
       toast({
         title: "Success",
