@@ -133,7 +133,8 @@ export const useTablets = () => {
 
       if (error) throw error;
 
-      // Real-time subscription will handle the update
+      // Fetch fresh data to replace optimistic tablet with real data
+      await fetchTablets();
       
       toast({
         title: "Success",
