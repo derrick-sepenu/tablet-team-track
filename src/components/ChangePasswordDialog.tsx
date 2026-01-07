@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,8 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { passwordSchema as strongPasswordSchema, PASSWORD_REQUIREMENTS } from '@/utils/passwordValidation';
+import { useToast } from '@/hooks/use-toast';
 
 const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
   password: strongPasswordSchema,
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -22,12 +25,15 @@ interface ChangePasswordDialogProps {
 }
 
 const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onClose }) => {
-  const { updatePassword } = useAuth();
+  const { updatePassword, profile } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [form, setForm] = useState({
+    currentPassword: '',
     password: '',
     confirmPassword: '',
   });
@@ -54,11 +60,42 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onClo
     }
 
     setIsLoading(true);
-    const { error } = await updatePassword(form.password);
     
-    if (!error) {
-      setForm({ password: '', confirmPassword: '' });
-      onClose();
+    try {
+      // First, reauthenticate with the current password
+      const { error: reauthError } = await supabase.auth.reauthenticate();
+      
+      if (reauthError) {
+        // If reauthenticate fails, try signing in with current password to verify
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: profile?.email || '',
+          password: form.currentPassword,
+        });
+        
+        if (signInError) {
+          toast({
+            title: "Authentication Failed",
+            description: "Current password is incorrect.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Now update the password
+      const { error } = await updatePassword(form.password);
+      
+      if (!error) {
+        setForm({ currentPassword: '', password: '', confirmPassword: '' });
+        onClose();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Password Update Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
     }
     
     setIsLoading(false);
@@ -75,6 +112,34 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onClo
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="current-password">Current Password</Label>
+            <div className="relative">
+              <Input
+                id="current-password"
+                type={showCurrentPassword ? 'text' : 'password'}
+                placeholder="Enter current password"
+                value={form.currentPassword}
+                onChange={(e) => setForm({ ...form, currentPassword: e.target.value })}
+                className={errors.currentPassword ? 'border-destructive pr-10' : 'pr-10'}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            {errors.currentPassword && <p className="text-sm text-destructive">{errors.currentPassword}</p>}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="new-password">New Password</Label>
             <div className="relative">
