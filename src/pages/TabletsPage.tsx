@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import TabletModal from "@/components/modals/TabletModal";
 import RepairRequestModal from "@/components/modals/RepairRequestModal";
+import BulkTabletImportModal from "@/components/modals/BulkTabletImportModal";
 import { useTablets, Tablet } from "@/hooks/useTablets";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel, formatTabletsForExport } from "@/utils/exportUtils";
@@ -25,13 +26,15 @@ import {
   Download,
   FileText,
   Loader2,
-  Trash2
+  Trash2,
+  Upload
 } from "lucide-react";
 
 const TabletsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [tabletModalOpen, setTabletModalOpen] = useState(false);
   const [repairModalOpen, setRepairModalOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [editingTablet, setEditingTablet] = useState<Tablet | undefined>();
   const [repairTabletId, setRepairTabletId] = useState<string | undefined>();
   
@@ -121,6 +124,10 @@ const TabletsPage = () => {
               <p className="text-muted-foreground">Manage your Samsung tablet fleet</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
               <Button variant="outline" onClick={handleExportCSV}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export CSV
@@ -275,6 +282,11 @@ const TabletsPage = () => {
           open={repairModalOpen}
           onOpenChange={setRepairModalOpen}
           preselectedTabletId={repairTabletId}
+        />
+
+        <BulkTabletImportModal
+          open={bulkImportOpen}
+          onOpenChange={setBulkImportOpen}
         />
       </main>
     </div>
