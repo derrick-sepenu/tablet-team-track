@@ -129,12 +129,10 @@ const TabletsPage = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export Excel
               </Button>
-              {profile?.role === 'super_admin' && (
-                <Button onClick={handleAddTablet} className="bg-primary hover:bg-primary-hover">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Tablet
-                </Button>
-              )}
+              <Button onClick={handleAddTablet} className="bg-primary hover:bg-primary-hover">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Tablet
+              </Button>
             </div>
           </div>
 
@@ -208,17 +206,15 @@ const TabletsPage = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    {profile?.role === 'super_admin' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleEditTablet(tablet)}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleEditTablet(tablet)}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -228,29 +224,27 @@ const TabletsPage = () => {
                       <Wrench className="h-3 w-3 mr-1" />
                       Repair
                     </Button>
-                    {profile?.role === 'super_admin' && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Tablet</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete tablet "{tablet.tablet_id}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteTablet(tablet.id)} className="bg-destructive hover:bg-destructive/90">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Tablet</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete tablet "{tablet.tablet_id}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteTablet(tablet.id)} className="bg-destructive hover:bg-destructive/90">
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardContent>
               </Card>
