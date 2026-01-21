@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import FieldWorkerModal from "@/components/modals/FieldWorkerModal";
+import BulkFieldWorkerImportModal from "@/components/modals/BulkFieldWorkerImportModal";
 import { useFieldWorkers, FieldWorker } from "@/hooks/useFieldWorkers";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel, formatWorkersForExport } from "@/utils/exportUtils";
@@ -23,12 +24,14 @@ import {
   FileText,
   Download,
   Loader2,
-  Trash2
+  Trash2,
+  Upload
 } from "lucide-react";
 
 const Workers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
+  const [bulkImportModalOpen, setBulkImportModalOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState<FieldWorker | undefined>();
   
   const { workers, loading, deleteWorker } = useFieldWorkers();
@@ -92,6 +95,10 @@ const Workers = () => {
               <Button variant="outline" onClick={() => exportToExcel(formatWorkersForExport(filteredWorkers), 'field_workers_report')}>
                 <Download className="h-4 w-4 mr-2" />
                 Export Excel
+              </Button>
+              <Button variant="outline" onClick={() => setBulkImportModalOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
               </Button>
               <Button onClick={handleAddWorker} className="bg-primary hover:bg-primary-hover">
                 <Plus className="h-4 w-4 mr-2" />
@@ -211,11 +218,15 @@ const Workers = () => {
         </div>
       </main>
 
-      {/* Modal */}
+      {/* Modals */}
       <FieldWorkerModal 
         open={workerModalOpen}
         onOpenChange={setWorkerModalOpen}
         worker={editingWorker}
+      />
+      <BulkFieldWorkerImportModal
+        open={bulkImportModalOpen}
+        onOpenChange={setBulkImportModalOpen}
       />
     </div>
   );
