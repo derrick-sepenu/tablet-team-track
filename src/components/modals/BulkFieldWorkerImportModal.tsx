@@ -18,7 +18,13 @@ import {
   XCircle, 
   AlertTriangle,
   Loader2,
-  Download
+  Download,
+  ArrowRight,
+  ArrowLeft,
+  Users,
+  FolderOpen,
+  Tablet,
+  Eye
 } from 'lucide-react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -57,6 +63,7 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
   const [isImporting, setIsImporting] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
   const [importResults, setImportResults] = useState({ success: 0, failed: 0 });
+  const [step, setStep] = useState<'upload' | 'validate' | 'preview' | 'complete'>('upload');
 
   const resetState = () => {
     setFile(null);
@@ -66,6 +73,7 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
     setIsImporting(false);
     setImportComplete(false);
     setImportResults({ success: 0, failed: 0 });
+    setStep('upload');
   };
 
   const handleClose = () => {
@@ -245,6 +253,7 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
       // Validate all rows (including duplicate checks)
       const results = validateRows(data);
       setValidationResults(results);
+      setStep('validate');
       
     } catch (error: any) {
       toast({
@@ -336,6 +345,7 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
     setImportResults({ success: successCount, failed: failCount });
     setImportComplete(true);
     setIsImporting(false);
+    setStep('complete');
     
     // Refresh workers list
     await fetchWorkers();
@@ -344,6 +354,53 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
       title: "Import Complete",
       description: `Successfully imported ${successCount} field workers. ${failCount > 0 ? `${failCount} failed.` : ''}`,
     });
+  };
+
+  // Generate preview summary
+  const getPreviewSummary = () => {
+    const validRows = validationResults.filter(r => r.isValid);
+    const invalidRows = validationResults.filter(r => !r.isValid);
+    const rowsWithWarnings = validationResults.filter(r => r.isValid && r.warnings.length > 0);
+    
+    // Count by project
+    const projectCounts: Record<string, number> = {};
+    const noProjectCount = validRows.filter(r => !r.data.project_name?.trim()).length;
+    
+    validRows.forEach(r => {
+      if (r.data.project_name?.trim()) {
+        const projectName = r.data.project_name.trim();
+        const projectExists = projects.some(p => p.name.toLowerCase() === projectName.toLowerCase());
+        if (projectExists) {
+          projectCounts[projectName] = (projectCounts[projectName] || 0) + 1;
+        }
+      }
+    });
+
+    // Count tablet assignments
+    const tabletAssignments = validRows.filter(r => {
+      if (!r.data.tablet_id?.trim()) return false;
+      const tablet = tablets.find(t => t.tablet_id.toLowerCase() === r.data.tablet_id!.toLowerCase().trim());
+      return tablet && tablet.status === 'available';
+    }).length;
+
+    // Count active vs inactive
+    const activeCount = validRows.filter(r => {
+      const isActiveValue = r.data.is_active?.toLowerCase().trim();
+      return !isActiveValue || isActiveValue === 'true' || isActiveValue === 'yes' || isActiveValue === 'active' || isActiveValue === '1';
+    }).length;
+    const inactiveCount = validRows.length - activeCount;
+
+    return {
+      total: validationResults.length,
+      willCreate: validRows.length,
+      willSkip: invalidRows.length,
+      withWarnings: rowsWithWarnings.length,
+      projectCounts,
+      noProjectCount,
+      tabletAssignments,
+      activeCount,
+      inactiveCount
+    };
   };
 
   const downloadTemplate = () => {
@@ -363,6 +420,7 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
   const validCount = validationResults.filter(r => r.isValid).length;
   const invalidCount = validationResults.filter(r => !r.isValid).length;
   const warningCount = validationResults.filter(r => r.warnings.length > 0).length;
+  const previewSummary = step === 'preview' ? getPreviewSummary() : null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -373,24 +431,53 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
             Bulk Import Field Workers
           </DialogTitle>
           <DialogDescription>
-            Upload a CSV or Excel file to import multiple field workers at once.
+            {step === 'upload' && 'Upload a CSV or Excel file to import multiple field workers at once.'}
+            {step === 'validate' && 'Review validation results before proceeding to import preview.'}
+            {step === 'preview' && 'Review what will be created before confirming the import.'}
+            {step === 'complete' && 'Import has been completed.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-          {/* Template Download */}
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="text-sm text-muted-foreground">
-              Need a template? Download our sample file to get started.
+        {/* Step Indicator */}
+        {file && (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+              step === 'validate' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+            }`}>
+              <span>1. Validate</span>
             </div>
-            <Button variant="outline" size="sm" onClick={downloadTemplate}>
-              <Download className="h-4 w-4 mr-2" />
-              Download Template
-            </Button>
+            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+              step === 'preview' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+            }`}>
+              <Eye className="h-3 w-3 mr-1" />
+              <span>2. Preview</span>
+            </div>
+            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+              step === 'complete' ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'
+            }`}>
+              <span>3. Import</span>
+            </div>
           </div>
+        )}
+
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+          {/* Template Download - only show on upload step */}
+          {step === 'upload' && (
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="text-sm text-muted-foreground">
+                Need a template? Download our sample file to get started.
+              </div>
+              <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                <Download className="h-4 w-4 mr-2" />
+                Download Template
+              </Button>
+            </div>
+          )}
 
           {/* File Upload */}
-          {!file && (
+          {step === 'upload' && !file && (
             <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
               <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
               <Label htmlFor="worker-file-upload" className="cursor-pointer">
@@ -418,8 +505,8 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
             </div>
           )}
 
-          {/* Validation Results */}
-          {file && !isValidating && !importComplete && (
+          {/* Validation Step */}
+          {step === 'validate' && file && !isValidating && (
             <>
               <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-2">
@@ -440,7 +527,7 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
                 {invalidCount > 0 && (
                   <Badge variant="outline" className="text-destructive border-destructive">
                     <XCircle className="h-3 w-3 mr-1" />
-                    {invalidCount} invalid
+                    {invalidCount} will be skipped
                   </Badge>
                 )}
                 {warningCount > 0 && (
@@ -507,8 +594,99 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
             </>
           )}
 
+          {/* Preview Step */}
+          {step === 'preview' && previewSummary && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Import Summary
+                </h3>
+                
+                {/* Main Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="text-2xl font-bold text-green-600">{previewSummary.willCreate}</div>
+                    <div className="text-xs text-green-700 dark:text-green-400">Will be created</div>
+                  </div>
+                  <div className="text-center p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                    <div className="text-2xl font-bold text-destructive">{previewSummary.willSkip}</div>
+                    <div className="text-xs text-red-700 dark:text-red-400">Will be skipped</div>
+                  </div>
+                  <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="text-2xl font-bold text-yellow-600">{previewSummary.withWarnings}</div>
+                    <div className="text-xs text-yellow-700 dark:text-yellow-400">With warnings</div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-3">
+                  {/* Project Breakdown */}
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FolderOpen className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-sm">Project Assignment</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      {Object.entries(previewSummary.projectCounts).map(([project, count]) => (
+                        <div key={project} className="flex justify-between">
+                          <span className="text-muted-foreground">{project}</span>
+                          <span className="font-medium">{count} worker{count !== 1 ? 's' : ''}</span>
+                        </div>
+                      ))}
+                      {previewSummary.noProjectCount > 0 && (
+                        <div className="flex justify-between text-yellow-600">
+                          <span>No project assigned</span>
+                          <span className="font-medium">{previewSummary.noProjectCount} worker{previewSummary.noProjectCount !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tablet & Status */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Tablet className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">Tablet Assignments</span>
+                      </div>
+                      <div className="text-2xl font-bold">{previewSummary.tabletAssignments}</div>
+                      <div className="text-xs text-muted-foreground">tablets will be assigned</div>
+                    </div>
+                    
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">Status</span>
+                      </div>
+                      <div className="flex gap-4 text-sm">
+                        <div>
+                          <span className="font-bold text-green-600">{previewSummary.activeCount}</span>
+                          <span className="text-muted-foreground ml-1">active</span>
+                        </div>
+                        <div>
+                          <span className="font-bold text-gray-500">{previewSummary.inactiveCount}</span>
+                          <span className="text-muted-foreground ml-1">inactive</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {previewSummary.willSkip > 0 && (
+                <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                    {previewSummary.willSkip} row{previewSummary.willSkip !== 1 ? 's' : ''} will be skipped due to validation errors.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
           {/* Import Complete */}
-          {importComplete && (
+          {step === 'complete' && (
             <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800 dark:text-green-200">
@@ -520,28 +698,50 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose}>
-            {importComplete ? 'Close' : 'Cancel'}
-          </Button>
-          {file && !isValidating && !importComplete && (
-            <Button 
-              onClick={handleImport} 
-              disabled={validCount === 0 || isImporting}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import {validCount} Workers
-                </>
-              )}
+        <div className="flex justify-between pt-4 border-t">
+          <div>
+            {step === 'preview' && (
+              <Button variant="ghost" onClick={() => setStep('validate')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Validation
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleClose}>
+              {step === 'complete' ? 'Close' : 'Cancel'}
             </Button>
-          )}
+            
+            {step === 'validate' && (
+              <Button 
+                onClick={() => setStep('preview')} 
+                disabled={validCount === 0}
+              >
+                Preview Import
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+            
+            {step === 'preview' && (
+              <Button 
+                onClick={handleImport} 
+                disabled={validCount === 0 || isImporting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Confirm Import ({validCount})
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
