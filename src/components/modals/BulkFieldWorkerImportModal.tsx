@@ -45,7 +45,7 @@ interface ValidationResult {
 }
 
 const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({ open, onOpenChange }) => {
-  const { fetchWorkers } = useFieldWorkers();
+  const { fetchWorkers, workers: existingWorkers } = useFieldWorkers();
   const { projects } = useProjects();
   const { tablets } = useTablets();
   const { toast } = useToast();
@@ -73,53 +73,96 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
     onOpenChange(false);
   };
 
-  const validateRow = (row: ImportRow, index: number): ValidationResult => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // Required fields
-    if (!row.staff_id?.trim()) {
-      errors.push('Staff Code is required');
-    } else {
-      const staffCode = row.staff_id.toUpperCase().trim();
-      if (!/^[A-Z]{2}$/.test(staffCode)) {
-        errors.push('Staff Code must be exactly 2 uppercase letters (e.g., AB, CD)');
-      }
-    }
+  const validateRows = (data: ImportRow[]): ValidationResult[] => {
+    // Track staff codes per project within the import file for duplicate detection
+    const staffCodesByProject: Map<string, { code: string; rowIndex: number }[]> = new Map();
     
-    if (!row.full_name?.trim()) {
-      errors.push('Full Name is required');
-    }
-
-    // Project validation
-    if (row.project_name?.trim()) {
-      const projectExists = projects.some(
-        p => p.name.toLowerCase() === row.project_name!.toLowerCase().trim()
-      );
-      if (!projectExists) {
-        warnings.push(`Project "${row.project_name}" not found. Worker will be created without project assignment.`);
+    // First pass: collect all staff codes by project
+    data.forEach((row, index) => {
+      if (row.staff_id?.trim() && row.project_name?.trim()) {
+        const projectKey = row.project_name.toLowerCase().trim();
+        const staffCode = row.staff_id.toUpperCase().trim();
+        
+        if (!staffCodesByProject.has(projectKey)) {
+          staffCodesByProject.set(projectKey, []);
+        }
+        staffCodesByProject.get(projectKey)!.push({ code: staffCode, rowIndex: index });
       }
-    }
+    });
 
-    // Tablet validation
-    if (row.tablet_id?.trim()) {
-      const tablet = tablets.find(
-        t => t.tablet_id.toLowerCase() === row.tablet_id!.toLowerCase().trim()
-      );
-      if (!tablet) {
-        warnings.push(`Tablet "${row.tablet_id}" not found. Worker will be created without tablet assignment.`);
-      } else if (tablet.status !== 'available') {
-        warnings.push(`Tablet "${row.tablet_id}" is not available (status: ${tablet.status}). Will skip tablet assignment.`);
+    // Second pass: validate each row
+    return data.map((row, index) => {
+      const errors: string[] = [];
+      const warnings: string[] = [];
+
+      // Required fields
+      if (!row.staff_id?.trim()) {
+        errors.push('Staff Code is required');
+      } else {
+        const staffCode = row.staff_id.toUpperCase().trim();
+        if (!/^[A-Z]{2}$/.test(staffCode)) {
+          errors.push('Staff Code must be exactly 2 uppercase letters (e.g., AB, CD)');
+        } else if (row.project_name?.trim()) {
+          const projectKey = row.project_name.toLowerCase().trim();
+          const project = projects.find(p => p.name.toLowerCase() === projectKey);
+          
+          if (project) {
+            // Check for duplicates within the import file
+            const codesInProject = staffCodesByProject.get(projectKey) || [];
+            const duplicatesInFile = codesInProject.filter(
+              c => c.code === staffCode && c.rowIndex !== index
+            );
+            if (duplicatesInFile.length > 0) {
+              const otherRows = duplicatesInFile.map(d => d.rowIndex + 1).join(', ');
+              errors.push(`Staff Code "${staffCode}" is duplicated in this file for project "${row.project_name}" (also in row${duplicatesInFile.length > 1 ? 's' : ''} ${otherRows})`);
+            }
+
+            // Check for duplicates against existing workers in the database
+            const existingWorker = existingWorkers.find(
+              w => w.staff_id.toUpperCase() === staffCode && 
+                   w.assigned_project_id === project.id
+            );
+            if (existingWorker) {
+              errors.push(`Staff Code "${staffCode}" already exists in project "${row.project_name}" (assigned to ${existingWorker.full_name})`);
+            }
+          }
+        }
       }
-    }
+      
+      if (!row.full_name?.trim()) {
+        errors.push('Full Name is required');
+      }
 
-    return {
-      row: index + 1,
-      data: row,
-      errors,
-      warnings,
-      isValid: errors.length === 0
-    };
+      // Project validation
+      if (row.project_name?.trim()) {
+        const projectExists = projects.some(
+          p => p.name.toLowerCase() === row.project_name!.toLowerCase().trim()
+        );
+        if (!projectExists) {
+          warnings.push(`Project "${row.project_name}" not found. Worker will be created without project assignment.`);
+        }
+      }
+
+      // Tablet validation
+      if (row.tablet_id?.trim()) {
+        const tablet = tablets.find(
+          t => t.tablet_id.toLowerCase() === row.tablet_id!.toLowerCase().trim()
+        );
+        if (!tablet) {
+          warnings.push(`Tablet "${row.tablet_id}" not found. Worker will be created without tablet assignment.`);
+        } else if (tablet.status !== 'available') {
+          warnings.push(`Tablet "${row.tablet_id}" is not available (status: ${tablet.status}). Will skip tablet assignment.`);
+        }
+      }
+
+      return {
+        row: index + 1,
+        data: row,
+        errors,
+        warnings,
+        isValid: errors.length === 0
+      };
+    });
   };
 
   const parseCSV = (file: File): Promise<ImportRow[]> => {
@@ -199,8 +242,8 @@ const BulkFieldWorkerImportModal: React.FC<BulkFieldWorkerImportModalProps> = ({
 
       setParsedData(data);
       
-      // Validate all rows
-      const results = data.map((row, index) => validateRow(row, index));
+      // Validate all rows (including duplicate checks)
+      const results = validateRows(data);
       setValidationResults(results);
       
     } catch (error: any) {
