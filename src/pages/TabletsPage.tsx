@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navigation from "@/components/Navigation";
 import TabletModal from "@/components/modals/TabletModal";
 import RepairRequestModal from "@/components/modals/RepairRequestModal";
@@ -14,7 +15,6 @@ import { exportToCSV, exportToExcel, formatTabletsForExport } from "@/utils/expo
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Search, 
-  Filter, 
   Plus,
   Tablet as TabletIcon,
   MapPin,
@@ -31,6 +31,7 @@ import {
 
 const TabletsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [tabletModalOpen, setTabletModalOpen] = useState(false);
   const [repairModalOpen, setRepairModalOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
@@ -64,12 +65,16 @@ const TabletsPage = () => {
     ));
   };
 
-  const filteredTablets = tablets.filter(tablet =>
-    tablet.tablet_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tablet.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tablet.field_worker?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tablet.project?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTablets = tablets.filter(tablet => {
+    const matchesSearch = tablet.tablet_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tablet.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tablet.field_worker?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tablet.project?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || tablet.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const handleAddTablet = () => {
     setEditingTablet(undefined);
@@ -160,10 +165,19 @@ const TabletsPage = () => {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" className="sm:w-auto">
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="assigned">Assigned</SelectItem>
+                <SelectItem value="in_repair">In Repair</SelectItem>
+                <SelectItem value="lost">Lost</SelectItem>
+                <SelectItem value="returned">Returned</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
