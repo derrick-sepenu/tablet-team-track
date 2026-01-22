@@ -8,9 +8,9 @@ import Navigation from "@/components/Navigation";
 import RepairRequestModal from "@/components/modals/RepairRequestModal";
 import { useRepairRequests } from "@/hooks/useRepairRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { 
   Search, 
-  Filter, 
   Plus,
   Wrench,
   Clock,
@@ -18,7 +18,9 @@ import {
   XCircle,
   AlertTriangle,
   Calendar,
-  User
+  User,
+  FileText,
+  Download
 } from "lucide-react";
 
 const RepairRequests = () => {
@@ -29,6 +31,31 @@ const RepairRequests = () => {
   
   const { repairRequests, loading, updateRepairRequest, completeRepairRequest } = useRepairRequests();
   const { profile } = useAuth();
+
+  const formatRepairRequestsForExport = () => {
+    return filteredRequests.map(request => ({
+      'Request ID': request.id.slice(0, 8),
+      'Tablet ID': request.tablet?.tablet_id || 'Unknown',
+      'Status': request.status.replace('_', ' '),
+      'Priority': request.priority,
+      'Problem Description': request.problem_description,
+      'Requested By': request.requested_by?.full_name || 'Unknown',
+      'Requested At': new Date(request.requested_at).toLocaleDateString(),
+      'Assigned Technician': request.assigned_technician || 'N/A',
+      'Completed At': request.completed_at ? new Date(request.completed_at).toLocaleDateString() : 'N/A',
+      'Status Notes': request.status_notes || 'N/A',
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const formattedData = formatRepairRequestsForExport();
+    exportToCSV(formattedData, 'damaged_tablets_report');
+  };
+
+  const handleExportExcel = () => {
+    const formattedData = formatRepairRequestsForExport();
+    exportToExcel(formattedData, 'damaged_tablets_report');
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -109,13 +136,23 @@ const RepairRequests = () => {
               <h1 className="text-2xl font-bold text-foreground">Repair Requests</h1>
               <p className="text-muted-foreground">Manage tablet repair requests and maintenance</p>
             </div>
-            <Button 
-              className="bg-primary hover:bg-primary-hover"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Submit Repair Request
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={handleExportCSV}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="outline" onClick={handleExportExcel}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </Button>
+              <Button 
+                className="bg-primary hover:bg-primary-hover"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Submit Repair Request
+              </Button>
+            </div>
           </div>
 
           {/* Search and Filters */}
