@@ -7,6 +7,7 @@ import Navigation from "@/components/Navigation";
 import TabletModal from "@/components/modals/TabletModal";
 import RepairRequestModal from "@/components/modals/RepairRequestModal";
 import BulkTabletImportModal from "@/components/modals/BulkTabletImportModal";
+import AssignTabletModal from "@/components/modals/AssignTabletModal";
 import { useTablets, Tablet } from "@/hooks/useTablets";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel, formatTabletsForExport } from "@/utils/exportUtils";
@@ -16,18 +17,16 @@ import {
   Filter, 
   Plus,
   Tablet as TabletIcon,
-  Battery,
-  Signal,
   MapPin,
   User,
-  Calendar,
   Edit,
   Wrench,
   Download,
   FileText,
   Loader2,
   Trash2,
-  Upload
+  Upload,
+  UserPlus
 } from "lucide-react";
 
 const TabletsPage = () => {
@@ -35,7 +34,9 @@ const TabletsPage = () => {
   const [tabletModalOpen, setTabletModalOpen] = useState(false);
   const [repairModalOpen, setRepairModalOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [editingTablet, setEditingTablet] = useState<Tablet | undefined>();
+  const [assigningTablet, setAssigningTablet] = useState<Tablet | undefined>();
   const [repairTabletId, setRepairTabletId] = useState<string | undefined>();
   
   const { tablets, loading, deleteTablet } = useTablets();
@@ -78,6 +79,11 @@ const TabletsPage = () => {
   const handleEditTablet = (tablet: Tablet) => {
     setEditingTablet(tablet);
     setTabletModalOpen(true);
+  };
+
+  const handleAssignTablet = (tablet: Tablet) => {
+    setAssigningTablet(tablet);
+    setAssignModalOpen(true);
   };
 
   const handleRepairRequest = (tabletId: string) => {
@@ -212,11 +218,19 @@ const TabletsPage = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-2 flex-wrap">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1"
+                      onClick={() => handleAssignTablet(tablet)}
+                      disabled={tablet.status === 'in_repair' || tablet.status === 'lost'}
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      Assign
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
                       onClick={() => handleEditTablet(tablet)}
                     >
                       <Edit className="h-3 w-3 mr-1" />
@@ -225,7 +239,6 @@ const TabletsPage = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1"
                       onClick={() => handleRepairRequest(tablet.id)}
                     >
                       <Wrench className="h-3 w-3 mr-1" />
@@ -288,6 +301,14 @@ const TabletsPage = () => {
           open={bulkImportOpen}
           onOpenChange={setBulkImportOpen}
         />
+
+        {assigningTablet && (
+          <AssignTabletModal
+            open={assignModalOpen}
+            onOpenChange={setAssignModalOpen}
+            tablet={assigningTablet}
+          />
+        )}
       </main>
     </div>
   );
