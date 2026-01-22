@@ -257,6 +257,16 @@ export const useTablets = () => {
     ));
 
     try {
+      // First, clear any existing worker's assignment to this tablet
+      const { error: clearError } = await supabase
+        .from('field_workers')
+        .update({ 
+          assigned_tablet_id: null
+        })
+        .eq('assigned_tablet_id', tabletId);
+
+      if (clearError) throw clearError;
+
       // Update tablet assignment
       const { error: tabletError } = await supabase
         .from('tablets')
