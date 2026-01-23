@@ -15,6 +15,7 @@ import UserManagement from "./pages/UserManagement";
 import Settings from "./pages/Settings";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import InventoryPage from "./pages/InventoryPage";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
 import { Loader2 } from "lucide-react";
 
@@ -75,6 +76,7 @@ const AppRoutes = () => {
       <Route path="/data-managers" element={<ProtectedRoute><DataManagers /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
       <Route path="/repair-requests" element={<ProtectedRoute><RepairRequests /></ProtectedRoute>} />
+      <Route path="/inventory" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

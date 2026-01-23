@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   LogOut,
-  Wrench
+  Wrench,
+  Package
 } from "lucide-react";
 
 const Navigation = () => {
@@ -33,6 +34,7 @@ const Navigation = () => {
       { href: "/data-managers", label: "Data Managers", icon: Users },
       { href: "/user-management", label: "User Management", icon: Settings },
       { href: "/repair-requests", label: "Repair Requests", icon: Wrench },
+      { href: "/inventory", label: "IT Inventory", icon: Package },
     ] : []),
   ];
 

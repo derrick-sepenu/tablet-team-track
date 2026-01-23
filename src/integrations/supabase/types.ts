@@ -106,6 +106,69 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          asset_tag: string | null
+          assigned_to: string | null
+          brand: string | null
+          category: Database["public"]["Enums"]["inventory_category"]
+          condition: Database["public"]["Enums"]["inventory_condition"]
+          created_at: string
+          id: string
+          is_active: boolean
+          item_name: string
+          location: string | null
+          model: string | null
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          quantity: number
+          serial_number: string | null
+          updated_at: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          brand?: string | null
+          category?: Database["public"]["Enums"]["inventory_category"]
+          condition?: Database["public"]["Enums"]["inventory_condition"]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_name: string
+          location?: string | null
+          model?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          quantity?: number
+          serial_number?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          brand?: string | null
+          category?: Database["public"]["Enums"]["inventory_category"]
+          condition?: Database["public"]["Enums"]["inventory_condition"]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_name?: string
+          location?: string | null
+          model?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          quantity?: number
+          serial_number?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -343,6 +406,24 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "data_manager"
+      inventory_category:
+        | "laptop"
+        | "desktop"
+        | "mouse"
+        | "keyboard"
+        | "monitor"
+        | "printer"
+        | "networking"
+        | "storage"
+        | "accessories"
+        | "other"
+      inventory_condition:
+        | "new"
+        | "good"
+        | "fair"
+        | "poor"
+        | "damaged"
+        | "decommissioned"
       priority_level: "low" | "medium" | "high"
       repair_status: "pending" | "in_progress" | "completed"
       tablet_status:
@@ -480,6 +561,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "data_manager"],
+      inventory_category: [
+        "laptop",
+        "desktop",
+        "mouse",
+        "keyboard",
+        "monitor",
+        "printer",
+        "networking",
+        "storage",
+        "accessories",
+        "other",
+      ],
+      inventory_condition: [
+        "new",
+        "good",
+        "fair",
+        "poor",
+        "damaged",
+        "decommissioned",
+      ],
       priority_level: ["low", "medium", "high"],
       repair_status: ["pending", "in_progress", "completed"],
       tablet_status: ["available", "assigned", "in_repair", "lost", "returned"],
