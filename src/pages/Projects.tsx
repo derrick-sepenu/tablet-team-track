@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Navigation from "@/components/Navigation";
 import ProjectModal from "@/components/modals/ProjectModal";
+import ProjectDetailsModal from "@/components/modals/ProjectDetailsModal";
 import { useProjects, Project } from "@/hooks/useProjects";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -54,6 +55,8 @@ const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>();
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   
   const { projects, loading, deleteProject } = useProjects();
   const { profile } = useAuth();
@@ -210,8 +213,15 @@ const Projects = () => {
   };
 
   const handleViewDetails = (project: DisplayProject) => {
-    // For now, we'll just show an alert with project details
-    alert(`Project Details:\nName: ${project.name}\nStatus: ${project.status}\nManager: ${project.manager}\nProgress: ${project.progress}%`);
+    // Find the real project from the projects array if it exists
+    const realProject = projects.find(p => p.id === project.id);
+    if (realProject) {
+      setSelectedProject(realProject);
+      setShowDetailsModal(true);
+    } else {
+      // For mock projects, show basic info
+      alert(`Project Details:\nName: ${project.name}\nStatus: ${project.status}\nManager: ${project.manager}\nProgress: ${project.progress}%`);
+    }
   };
 
   const handleManageTeam = (project: DisplayProject) => {
@@ -433,6 +443,12 @@ const Projects = () => {
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         project={editingProject}
+      />
+      
+      <ProjectDetailsModal
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        project={selectedProject}
       />
     </div>
   );
