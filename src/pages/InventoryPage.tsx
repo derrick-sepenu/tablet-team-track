@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Navigation from "@/components/Navigation";
 import InventoryItemModal from "@/components/modals/InventoryItemModal";
+import BulkInventoryImportModal from "@/components/modals/BulkInventoryImportModal";
 import { useInventoryItems, InventoryItem } from "@/hooks/useInventoryItems";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { exportToCSV, formatInventoryItemsForExport } from "@/utils/exportUtils";
+import * as XLSX from "xlsx";
 import { 
   Search, 
   Plus,
@@ -23,7 +27,9 @@ import {
   Keyboard,
   Printer,
   Network,
-  Box
+  Box,
+  Download,
+  Upload
 } from "lucide-react";
 
 const InventoryPage = () => {
@@ -31,10 +37,24 @@ const InventoryPage = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [conditionFilter, setConditionFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | undefined>();
   
   const { items, loading, deleteItem } = useInventoryItems();
   const { profile } = useAuth();
+
+  const handleExportCSV = () => {
+    const dataToExport = formatInventoryItemsForExport(filteredItems);
+    exportToCSV(dataToExport, `inventory_export_${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = formatInventoryItemsForExport(filteredItems);
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+    XLSX.writeFile(workbook, `inventory_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -112,12 +132,37 @@ const InventoryPage = () => {
             <p className="text-muted-foreground">Manage IT assets and equipment</p>
           </div>
           
-          {profile?.role === 'super_admin' && (
-            <Button onClick={handleAddItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          )}
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel}>
+                  Export as Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {profile?.role === 'super_admin' && (
+              <>
+                <Button variant="outline" onClick={() => setImportModalOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
+                </Button>
+                <Button onClick={handleAddItem}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
@@ -273,6 +318,11 @@ const InventoryPage = () => {
         open={modalOpen}
         onOpenChange={setModalOpen}
         item={editingItem}
+      />
+      
+      <BulkInventoryImportModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
       />
     </div>
   );

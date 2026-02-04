@@ -2,6 +2,7 @@ import { Tablet } from '@/hooks/useTablets';
 import { FieldWorker } from '@/hooks/useFieldWorkers';
 import { Project } from '@/hooks/useProjects';
 import { RepairRequest } from '@/hooks/useRepairRequests';
+import { InventoryItem } from '@/hooks/useInventoryItems';
 
 // CSV export utility
 export const exportToCSV = (data: any[], filename: string) => {
@@ -98,5 +99,26 @@ export const formatRepairRequestsForExport = (requests: RepairRequest[]) => {
     'Status Notes': request.status_notes || '',
     'Requested At': new Date(request.requested_at).toLocaleDateString(),
     'Completed At': request.completed_at ? new Date(request.completed_at).toLocaleDateString() : '',
+  }));
+};
+
+export const formatInventoryItemsForExport = (items: InventoryItem[]) => {
+  return items.map(item => ({
+    'Item Name': item.item_name,
+    'Category': item.category,
+    'Brand': item.brand || '',
+    'Model': item.model || '',
+    'Serial Number': item.serial_number || '',
+    'Asset Tag': item.asset_tag || '',
+    'Condition': item.condition,
+    'Quantity': item.quantity,
+    'Location': item.location || '',
+    'Assigned To': item.assigned_to || '',
+    'Purchase Date': item.purchase_date ? new Date(item.purchase_date).toLocaleDateString() : '',
+    'Purchase Price': item.purchase_price || '',
+    'Warranty Expiry': item.warranty_expiry ? new Date(item.warranty_expiry).toLocaleDateString() : '',
+    'Notes': item.notes || '',
+    'Status': item.is_active ? 'Active' : 'Inactive',
+    'Created At': new Date(item.created_at).toLocaleDateString(),
   }));
 };
