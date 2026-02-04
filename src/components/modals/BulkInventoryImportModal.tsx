@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useInventoryItems } from "@/hooks/useInventoryItems";
-import { Upload, FileSpreadsheet, Check, AlertCircle, Download } from "lucide-react";
+import { Upload, FileSpreadsheet, Check, AlertCircle, Download, Search } from "lucide-react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
@@ -40,6 +40,7 @@ const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> = ({ ope
   const [step, setStep] = useState<'upload' | 'preview' | 'importing'>('upload');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { createItem } = useInventoryItems();
 
@@ -47,7 +48,23 @@ const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> = ({ ope
     setStep('upload');
     setValidationResult(null);
     setIsImporting(false);
+    setSearchQuery('');
   }, []);
+
+  const filteredValid = validationResult?.valid.filter(row => 
+    row.item_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.asset_tag?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
+
+  const filteredInvalid = validationResult?.invalid.filter(item =>
+    item.row.item_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.row.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.row.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.errors.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()))
+  ) || [];
 
   const handleClose = useCallback(() => {
     resetState();
@@ -272,34 +289,64 @@ const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> = ({ ope
 
         {step === 'preview' && validationResult && (
           <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search items by name, category, brand, serial number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 border rounded-lg bg-emerald-500/10">
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                   <Check className="h-5 w-5" />
-                  <span className="font-medium">{validationResult.valid.length} Valid Items</span>
+                  <span className="font-medium">
+                    {searchQuery ? `${filteredValid.length} of ${validationResult.valid.length}` : validationResult.valid.length} Valid Items
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">Ready to import</p>
               </div>
               <div className="p-4 border rounded-lg bg-destructive/10">
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-5 w-5" />
-                  <span className="font-medium">{validationResult.invalid.length} Invalid Items</span>
+                  <span className="font-medium">
+                    {searchQuery ? `${filteredInvalid.length} of ${validationResult.invalid.length}` : validationResult.invalid.length} Invalid Items
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">Will be skipped</p>
               </div>
             </div>
 
-            {validationResult.invalid.length > 0 && (
+            {filteredValid.length > 0 && (
               <div className="border rounded-lg p-4 max-h-40 overflow-y-auto">
-                <p className="font-medium text-sm mb-2">Validation Errors:</p>
-                {validationResult.invalid.slice(0, 5).map((item, idx) => (
+                <p className="font-medium text-sm mb-2 text-emerald-600 dark:text-emerald-400">Valid Items Preview:</p>
+                {filteredValid.slice(0, 5).map((item, idx) => (
+                  <div key={idx} className="text-sm text-muted-foreground mb-1">
+                    <span className="font-medium">{item.item_name}</span>
+                    {item.category && <span className="ml-2">({item.category})</span>}
+                    {item.brand && <span className="ml-2">• {item.brand}</span>}
+                  </div>
+                ))}
+                {filteredValid.length > 5 && (
+                  <p className="text-sm text-muted-foreground">...and {filteredValid.length - 5} more</p>
+                )}
+              </div>
+            )}
+
+            {filteredInvalid.length > 0 && (
+              <div className="border rounded-lg p-4 max-h-40 overflow-y-auto">
+                <p className="font-medium text-sm mb-2 text-destructive">Validation Errors:</p>
+                {filteredInvalid.slice(0, 5).map((item, idx) => (
                   <div key={idx} className="text-sm text-muted-foreground mb-2">
                     <span className="font-medium">{item.row.item_name || 'Unknown'}: </span>
                     {item.errors.join('; ')}
                   </div>
                 ))}
-                {validationResult.invalid.length > 5 && (
-                  <p className="text-sm text-muted-foreground">...and {validationResult.invalid.length - 5} more</p>
+                {filteredInvalid.length > 5 && (
+                  <p className="text-sm text-muted-foreground">...and {filteredInvalid.length - 5} more</p>
                 )}
               </div>
             )}
