@@ -29,10 +29,19 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
     is_active: worker?.is_active ?? true,
   });
 
-  // Filter tablets that are available or currently assigned to this worker
-  const availableTablets = tablets.filter(tablet => 
-    tablet.status === 'available' || tablet.id === worker?.assigned_tablet_id
-  );
+  // Filter tablets: only show tablets assigned to the selected project (or available with no project), 
+  // plus the currently assigned tablet for editing
+  const availableTablets = tablets.filter(tablet => {
+    // Always show the currently assigned tablet when editing
+    if (tablet.id === worker?.assigned_tablet_id) return true;
+    // Only show available tablets
+    if (tablet.status !== 'available') return false;
+    // If a project is selected, only show tablets assigned to that project or unassigned tablets
+    if (formData.assigned_project_id && formData.assigned_project_id !== 'none') {
+      return tablet.assigned_project_id === formData.assigned_project_id || !tablet.assigned_project_id;
+    }
+    return true;
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +129,14 @@ const FieldWorkerForm: React.FC<FieldWorkerFormProps> = ({ worker, onSuccess, on
   };
 
   const handleChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      // Reset tablet selection when project changes
+      if (field === 'assigned_project_id') {
+        updated.assigned_tablet_id = 'none';
+      }
+      return updated;
+    });
   };
 
   return (
