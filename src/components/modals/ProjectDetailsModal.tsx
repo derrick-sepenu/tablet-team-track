@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Project } from '@/hooks/useProjects';
-import { exportToCSV, exportToExcel } from '@/utils/exportUtils';
+import { exportToCSV, exportToExcelMultiSheet } from '@/utils/exportUtils';
 import { Download, FileSpreadsheet, Tablet, Users, User } from 'lucide-react';
 
 interface ProjectDetailsModalProps {
@@ -44,14 +44,33 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
     }));
   };
 
-  const handleExportCSV = () => {
-    if (tablets.length === 0) return;
-    exportToCSV(formatTabletsForExport(), `${project.name.replace(/\s+/g, '_')}_tablets`);
+  const formatWorkersForExport = () => {
+    return fieldWorkers.map(worker => ({
+      'Staff ID': worker.staff_id,
+      'Full Name': worker.full_name,
+      'Project': project.name,
+      'Data Manager': project.data_manager?.full_name || 'Unassigned',
+    }));
   };
 
-  const handleExportExcel = () => {
+  const projectSlug = project.name.replace(/\s+/g, '_');
+
+  const handleExportTabletsCSV = () => {
     if (tablets.length === 0) return;
-    exportToExcel(formatTabletsForExport(), `${project.name.replace(/\s+/g, '_')}_tablets`);
+    exportToCSV(formatTabletsForExport(), `${projectSlug}_tablets`);
+  };
+
+  const handleExportWorkersCSV = () => {
+    if (fieldWorkers.length === 0) return;
+    exportToCSV(formatWorkersForExport(), `${projectSlug}_field_workers`);
+  };
+
+  const handleExportAllExcel = async () => {
+    const sheets = [];
+    if (tablets.length > 0) sheets.push({ name: 'Tablets', data: formatTabletsForExport() });
+    if (fieldWorkers.length > 0) sheets.push({ name: 'Field Workers', data: formatWorkersForExport() });
+    if (sheets.length === 0) return;
+    await exportToExcelMultiSheet(sheets, `${projectSlug}_project_data`);
   };
 
   return (
@@ -105,6 +124,16 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
             </div>
           )}
 
+          {/* Export All Button */}
+          {(tablets.length > 0 || fieldWorkers.length > 0) && (
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={handleExportAllExcel}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Export All to Excel
+              </Button>
+            </div>
+          )}
+
           {/* Tablets Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -113,16 +142,10 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
                 Assigned Tablets
               </h3>
               {tablets.length > 0 && (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportExcel}>
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Export Excel
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" onClick={handleExportTabletsCSV}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
               )}
             </div>
 
@@ -158,10 +181,16 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
           {/* Field Workers Section */}
           {fieldWorkers.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Assigned Field Workers
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Assigned Field Workers
+                </h3>
+                <Button variant="outline" size="sm" onClick={handleExportWorkersCSV}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
               <div className="border rounded-lg">
                 <Table>
                   <TableHeader>
