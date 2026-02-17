@@ -18,6 +18,7 @@ interface ProjectDetailsModalProps {
 interface TabletWithWorker {
   tablet_id: string;
   model: string;
+  sim_number: string | null;
   field_worker_name: string;
 }
 
@@ -32,26 +33,26 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
     if (!project || !open) return;
 
     const fetchTabletWorkerMapping = async () => {
-      const tablets = project.tablets || [];
-      if (tablets.length === 0) {
+      const tabletIds = (project.tablets || []).map(t => t.id);
+      if (tabletIds.length === 0) {
         setTabletsWithWorkers([]);
         return;
       }
 
-      const tabletIds = tablets.map(t => t.id);
-      const { data: workers } = await supabase
-        .from('field_workers')
-        .select('full_name, assigned_tablet_id')
-        .in('assigned_tablet_id', tabletIds);
+      const [{ data: fullTablets }, { data: workers }] = await Promise.all([
+        supabase.from('tablets').select('id, tablet_id, model, sim_number').in('id', tabletIds),
+        supabase.from('field_workers').select('full_name, assigned_tablet_id').in('assigned_tablet_id', tabletIds),
+      ]);
 
       const workerMap = new Map<string, string>();
       workers?.forEach(w => {
         if (w.assigned_tablet_id) workerMap.set(w.assigned_tablet_id, w.full_name);
       });
 
-      setTabletsWithWorkers(tablets.map(t => ({
+      setTabletsWithWorkers((fullTablets || []).map(t => ({
         tablet_id: t.tablet_id,
         model: t.model,
+        sim_number: t.sim_number,
         field_worker_name: workerMap.get(t.id) || 'Unassigned',
       })));
     };
@@ -79,6 +80,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
     return tabletsWithWorkers.map(t => ({
       'Tablet ID': t.tablet_id,
       'Model': t.model,
+      'SIM Number': t.sim_number || '',
       'Assigned Field Worker': t.field_worker_name,
       'Project': project.name,
       'Data Manager': project.data_manager?.full_name || 'Unassigned',
