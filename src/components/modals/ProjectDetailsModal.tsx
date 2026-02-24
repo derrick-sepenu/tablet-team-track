@@ -19,6 +19,7 @@ interface TabletWithWorker {
   tablet_id: string;
   model: string;
   sim_number: string | null;
+  status: string;
   field_worker_name: string;
 }
 
@@ -40,7 +41,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
       }
 
       const [{ data: fullTablets }, { data: workers }] = await Promise.all([
-        supabase.from('tablets').select('id, tablet_id, model, sim_number').in('id', tabletIds),
+        supabase.from('tablets').select('id, tablet_id, model, sim_number, status').in('id', tabletIds),
         supabase.from('field_workers').select('full_name, assigned_tablet_id').in('assigned_tablet_id', tabletIds),
       ]);
 
@@ -53,6 +54,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
         tablet_id: t.tablet_id,
         model: t.model,
         sim_number: t.sim_number,
+        status: t.status,
         field_worker_name: workerMap.get(t.id) || 'Unassigned',
       })));
     };
@@ -81,6 +83,7 @@ const ProjectDetailsModal: React.FC<ProjectDetailsModalProps> = ({
       'Tablet ID': t.tablet_id,
       'Model': t.model,
       'SIM Number': t.sim_number || '',
+      'Status': t.status,
       'Assigned Field Worker': t.field_worker_name,
       'Project': project.name,
       'Data Manager': project.data_manager?.full_name || 'Unassigned',
