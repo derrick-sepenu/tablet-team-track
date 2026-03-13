@@ -36,7 +36,7 @@ export const useDashboardStats = () => {
       setLoading(true);
 
       // Build queries based on user role
-      let tabletsQuery = supabase.from('tablets').select('status', { count: 'exact' });
+      let tabletsQuery = supabase.from('tablets').select('status, assigned_project_id', { count: 'exact' });
       let workersQuery = supabase.from('field_workers').select('is_active', { count: 'exact' });
       let projectsQuery = supabase.from('projects').select('id', { count: 'exact' });
       let repairRequestsQuery = supabase.from('repair_requests').select('status', { count: 'exact' });
@@ -88,7 +88,7 @@ export const useDashboardStats = () => {
       const workers = workersRes.data || [];
       const repairRequests = repairRequestsRes.data || [];
 
-      const availableTablets = tablets.filter(t => t.status === 'available').length;
+      const availableTablets = tablets.filter(t => !t.assigned_project_id).length;
       const assignedTablets = tablets.filter(t => t.status === 'assigned').length;
       const inRepairTablets = tablets.filter(t => t.status === 'in_repair').length;
       const returnedTablets = tablets.filter(t => t.status === 'returned').length;
