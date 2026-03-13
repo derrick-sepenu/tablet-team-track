@@ -10,6 +10,8 @@ export interface DashboardStats {
   pendingRepairRequests: number;
   totalProjects: number;
   inRepairTablets: number;
+  returnedTablets: number;
+  lostTablets: number;
 }
 
 export const useDashboardStats = () => {
@@ -22,6 +24,8 @@ export const useDashboardStats = () => {
     pendingRepairRequests: 0,
     totalProjects: 0,
     inRepairTablets: 0,
+    returnedTablets: 0,
+    lostTablets: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +65,8 @@ export const useDashboardStats = () => {
             pendingRepairRequests: 0,
             totalProjects: 0,
             inRepairTablets: 0,
+            returnedTablets: 0,
+            lostTablets: 0,
           });
           setLoading(false);
           return;
@@ -85,6 +91,8 @@ export const useDashboardStats = () => {
       const availableTablets = tablets.filter(t => t.status === 'available').length;
       const assignedTablets = tablets.filter(t => t.status === 'assigned').length;
       const inRepairTablets = tablets.filter(t => t.status === 'in_repair').length;
+      const returnedTablets = tablets.filter(t => t.status === 'returned').length;
+      const lostTablets = tablets.filter(t => t.status === 'lost').length;
       const activeWorkers = workers.filter(w => w.is_active).length;
       const pendingRepairRequests = repairRequests.filter(r => r.status === 'pending').length;
 
@@ -96,6 +104,8 @@ export const useDashboardStats = () => {
         pendingRepairRequests,
         totalProjects: projectsRes.count || 0,
         inRepairTablets,
+        returnedTablets,
+        lostTablets,
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);

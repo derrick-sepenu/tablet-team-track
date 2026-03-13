@@ -8,7 +8,9 @@ import {
   FolderOpen,
   CheckCircle,
   Activity,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  ShieldAlert
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -71,6 +73,22 @@ const StatsWidget = () => {
       icon: Wrench,
       color: "text-warning",
       onClick: () => navigate('/repair-requests'),
+    },
+    {
+      title: "Returned",
+      value: stats.returnedTablets,
+      description: "Returned devices",
+      icon: RotateCcw,
+      color: "text-muted-foreground",
+      onClick: () => navigate('/tablets'),
+    },
+    {
+      title: "Lost",
+      value: stats.lostTablets,
+      description: "Missing devices",
+      icon: ShieldAlert,
+      color: "text-destructive",
+      onClick: () => navigate('/tablets'),
     },
     {
       title: "Active Workers",
