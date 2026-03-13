@@ -65,6 +65,8 @@ export const useDashboardStats = () => {
             pendingRepairRequests: 0,
             totalProjects: 0,
             inRepairTablets: 0,
+            returnedTablets: 0,
+            lostTablets: 0,
           });
           setLoading(false);
           return;
