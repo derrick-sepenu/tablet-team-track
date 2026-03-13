@@ -88,7 +88,7 @@ export const useDashboardStats = () => {
       const workers = workersRes.data || [];
       const repairRequests = repairRequestsRes.data || [];
 
-      const availableTablets = tablets.filter(t => t.status === 'available').length;
+      const availableTablets = tablets.filter(t => !t.assigned_project_id).length;
       const assignedTablets = tablets.filter(t => t.status === 'assigned').length;
       const inRepairTablets = tablets.filter(t => t.status === 'in_repair').length;
       const returnedTablets = tablets.filter(t => t.status === 'returned').length;
