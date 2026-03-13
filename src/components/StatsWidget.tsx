@@ -8,7 +8,9 @@ import {
   FolderOpen,
   CheckCircle,
   Activity,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  ShieldAlert
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
