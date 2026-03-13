@@ -10,6 +10,8 @@ export interface DashboardStats {
   pendingRepairRequests: number;
   totalProjects: number;
   inRepairTablets: number;
+  returnedTablets: number;
+  lostTablets: number;
 }
 
 export const useDashboardStats = () => {
